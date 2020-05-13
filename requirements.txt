@@ -1,0 +1,6 @@
+
+matplotlib==3.*
+xarray>=0.15.0
+cdsapi>=0.2.7
+scipy>=1.4.1
+
