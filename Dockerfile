@@ -80,12 +80,15 @@ RUN if [ "$jlab" = true ]; then \
     else echo "[INFO] Skip JupyterLab installation!"; fi
 
 # Install user app:
-RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
-    cd  o3as && \
-    pip install --no-cache-dir -e . && \
-    rm -rf /root/.cache/pip/* && \
-    rm -rf /tmp/* && \
-    cd ..
+#RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
+#    cd  o3as && \
+#    pip install --no-cache-dir -e . && \
+#    rm -rf /root/.cache/pip/* && \
+#    rm -rf /tmp/* && \
+#    cd ..
+# Use docker build gitlab_link
+COPY * /srv/o3as/
+
 
 # Open Jupyter port
 EXPOSE 8888
