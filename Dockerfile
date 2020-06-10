@@ -13,7 +13,7 @@ ARG tag=bionic
 # Base image, e.g. ubuntu:bionic
 FROM ubuntu:${tag}
 
-LABEL maintainer='Borja Esteban, Tobias Kerzenmacher, V.Kozlov (KIT)'
+LABEL maintainer='B.Esteban, T.Kerzenmacher, V.Kozlov (KIT)'
 # o3as scripts to process data
 
 # What user branch to clone (!)
@@ -26,13 +26,12 @@ ARG jlab=true
 # link python3 to python, pip3 to pip, if needed
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends \
-         git \
-         graphviz \
          curl \
+         git \
+         parallel \
          wget \
          python3-setuptools \
          python3-pip \
-         python3-dev \
          python3-wheel && \ 
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
@@ -65,19 +64,23 @@ RUN wget https://downloads.rclone.org/rclone-current-linux-amd64.deb && \
 
 ENV RCLONE_CONFIG=/srv/.rclone/rclone.conf
 
-# EXPERIMENTAL: install deep-start script
-# N.B.: This repository also contains run_jupyter.sh
-RUN git clone https://github.com/deephdc/deep-start /srv/.deep-start && \
-    ln -s /srv/.deep-start/deep-start.sh /usr/local/bin/deep-start && \
-    ln -s /srv/.deep-start/run_jupyter.sh /usr/local/bin/run_jupyter
-
 # Install JupyterLab
-ENV JUPYTER_CONFIG_DIR /srv/.deep-start/
+ENV JUPYTER_CONFIG_DIR /srv/o3as/.jupyter/
 # Necessary for the Jupyter Lab terminal
 ENV SHELL /bin/bash
 RUN if [ "$jlab" = true ]; then \
        pip install --no-cache-dir jupyterlab ; \
     else echo "[INFO] Skip JupyterLab installation!"; fi
+
+# Install CDO:
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+    apt-get install -y --no-install-recommends cdo && \ 
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /root/.cache/pip/* && \
+    rm -rf /tmp/* && \
+    python --version && \
+    pip --version
 
 # Install user app:
 #RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
@@ -86,12 +89,14 @@ RUN if [ "$jlab" = true ]; then \
 #    rm -rf /root/.cache/pip/* && \
 #    rm -rf /tmp/* && \
 #    cd ..
-# Use docker build gitlab_link
-COPY * /srv/o3as/
 
+# Install user app:
+# Use docker build gitlab_link
+ADD $PWD /srv/o3as/
+RUN cd /srv/o3as && pip install --no-cache-dir -r requirements.txt
 
 # Open Jupyter port
 EXPOSE 8888
 
 # Start default script
-CMD ["/srv/o3as/eosc.sh"]
+CMD ["cdo", "--version"]
