@@ -1,5 +1,6 @@
-# Dockerfile has three Arguments: tag, branch
-# tag - tag for base mage (default: bionic)
+# Dockerfile has three Arguments: base, tag, branch
+# base - base image (default: debian, optional: ubuntu)
+# tag - tag for base mage (default: stable-slim)
 # branch - user repository branch to clone (default: master, other option: test)
 #
 # To build the image:
@@ -7,11 +8,13 @@
 # or using default args:
 # $ docker build -t <dockerhub_user>/<dockerhub_repo> .
 
-# set the tag
-ARG tag=bionic
+# set the base image. default is debian, optional ubuntu
+ARG base=debian
+# set the tag (e.g. latest, stable, stable-slim : for debian)
+ARG tag=stable-slim
 
-# Base image, e.g. ubuntu:bionic
-FROM ubuntu:${tag}
+# Base image, e.g. debian:stable or ubuntu:bionic
+FROM ${base}:${tag}
 
 LABEL maintainer='B.Esteban, T.Kerzenmacher, V.Kozlov (KIT)'
 # o3as scripts to process data
@@ -26,6 +29,7 @@ ARG jlab=true
 # link python3 to python, pip3 to pip, if needed
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends \
+         binutils \
          curl \
          git \
          parallel \
@@ -73,8 +77,12 @@ RUN if [ "$jlab" = true ]; then \
     else echo "[INFO] Skip JupyterLab installation!"; fi
 
 # Install CDO:
+# libQt5 requires kernel >3.10
+# use trick and remove this dependency in libQt5 (strip ..)
+# https://askubuntu.com/questions/1034313/ubuntu-18-4-libqt5core-so-5-cannot-open-shared-object-file-no-such-file-or-dir
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    apt-get install -y --no-install-recommends cdo && \ 
+    apt-get install -y --no-install-recommends cdo && \
+    strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/.cache/pip/* && \

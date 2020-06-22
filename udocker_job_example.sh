@@ -17,27 +17,25 @@
 # More INFO: https://github.com/indigo-dc/udocker/blob/master/doc/installation_manual.md
 ####
 
-DOCKER_IMAGE=synergyimk/o3as:deb10-cdo196
-DOCKER_CONTAINER="o3as-deb10-cdo196"
+DOCKER_IMAGE="synergyimk/o3as:deb10-cdo196"
+UDOCKER_CONTAINER="o3as-deb10-cdo196"
 
 ##### If you need to pull NEW image and CREATE Container, do first:
-#docker pull ${DOCKER_IMAGE}
-#udocker pull synergyimk/o3as:ubuntu
-#docker create --name=${DOCKER_CONTAINER} ${DOCKER_IMAGE}
-#udocker create --name=o3as-ubuntu synergyimk/o3as:ubuntu
+udocker pull ${DOCKER_IMAGE}
+udocker create --name=${UDOCKER_CONTAINER} ${DOCKER_IMAGE}
 # NB: creating container may take 5-10 minutes...
 #may change execmode:
 #udocker setup --execmode=F3 o3as-ubuntu
 #####
 
-# Best is to create a soft link to folder were the data are in ./Data/raw
-# For example `ln -s /home/<user>/O3as/Data/Ecmwf ./Data/raw/Ecmwf`
-HOST_DATA_RAW=`readlink -f ./Data/raw/Ecmwf`
-HOST_DATA_OUT=./Data/output
+# Directories at your host for the raw data and outputs
+HOST_DATA_RAW=$HOME/synergy/o3as/Data/raw/Ecmwf
+HOST_DATA_OUT=$HOME/synergy/o3as/Data/output
 
-DOCKER_OPTIONS="-v $HOST_DATA_RAW:/mnt/data/input -v $HOST_DATA_OUT:/mnt/data/output"
-DOCKER_RUN_COMMAND="/srv/o3as/eosc.sh -i /mnt/data/input/ -o /mnt/data/output/ -b 1980 -e 1981 -l 50"
+# mount necessary host directories inside container
+UDOCKER_OPTIONS="-v $HOST_DATA_RAW:/mnt/data/input -v $HOST_DATA_OUT:/mnt/data/output"
 
-docker run  ${DOCKER_OPTIONS} ${DOCKER_IMAGE} ${DOCKER_RUN_COMMAND}
+# define the command to run inside container
+UDOCKER_RUN_COMMAND="/srv/o3as/eosc.sh -i /mnt/data/input/ -o /mnt/data/output/ -b 1980 -e 1981 -l 50"
 
-
+udocker run  ${UDOCKER_OPTIONS} ${UDOCKER_CONTAINER} ${UDOCKER_RUN_COMMAND}
