@@ -38,9 +38,9 @@ function usage()
 
 # Define default settings
 # define where the source data resides
-inpath=data
+inpath=data/
 # define where the results will be stored
-outpath=output
+outpath=output/
 # select the start year
 beginyear=1980
 #select the end year
