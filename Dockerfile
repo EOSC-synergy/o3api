@@ -60,8 +60,10 @@ ENV LANG C.UTF-8
 
 # Set the working directory
 WORKDIR /srv
-COPY src /srv/src
-RUN mkdir /srv/data
+COPY src src
+RUN mkdir data && \ 
+    mkdir output
+
 
 # Start default script
 CMD ["cdo", "--version"]
