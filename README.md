@@ -43,9 +43,10 @@ services:
 
 ## Issues getting the data into a local folder?
 To mount a remote file system using ssh I recommend the usage of [sshfs](https://github.com/libfuse/sshfs)
-* To mount:  `$ sshfs [user@]hostname:[directory] mountpoint`
+* To mount:  `$ sshfs -o allow_other [user@]hostname:[directory] mountpoint`
 * To unmount: `$ umount mountpoint`
 
+> The option -o allow_other is mandatory to allow docker to access the mount point.
 
 # Running with udocker
 In cases where your user cannot get administration rights, the alternative is to use [udocker](https://indigo-dc.gitbook.io/udocker/). 
@@ -91,7 +92,7 @@ To push the image to {your-registry} (In Docker hub for example).
 To change execmode.
 
 ### RUN the container
-In a similar way that with docker, you can run:
+In a similar way it would be done with docker, you can run:
 ```sh
 udocker run \
     -v /path/to/data:/srv/data:ro \
