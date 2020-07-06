@@ -1,6 +1,7 @@
-# Dockerfile has 2 Arguments: base, tag 
+# Dockerfile has three Arguments: base, tag, branch
 # base - base image (default: debian, optional: ubuntu)
 # tag - tag for base mage (default: stable-slim)
+# branch - user repository branch to clone (default: master, other option: test)
 #
 # To build the image:
 # $ docker build -t <dockerhub_user>/<dockerhub_repo> --build-arg arg=value .
@@ -18,51 +19,46 @@ FROM ${base}:${tag}
 LABEL maintainer='B.Esteban, T.Kerzenmacher, V.Kozlov (KIT)'
 # o3as scripts to process data
 
+# What user branch to clone (!)
+ARG branch=master
+
 # Install system updates and tools
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system updates and tools
         binutils \
-        curl \
         parallel \
-        wget
-
-# install python3
-RUN apt-get install -y --no-install-recommends \
+        git \
+# Install system updates and tools
         python3-setuptools \
         python3-pip \
-        python3-wheel &&\
-    python3 --version && \
-    pip3 --version
-
+        python3-wheel \
 # Install CDO:
 # libQt5 requires kernel >3.10
 # use trick and remove this dependency in libQt5 (strip ..)
 # https://askubuntu.com/questions/1034313/ubuntu-18-4-libqt5core-so-5-cannot-open-shared-object-file-no-such-file-or-dir
-RUN apt-get install -y --no-install-recommends cdo && \
+        cdo && \
     strip --remove-section=.note.ABI-tag /usr/lib/x86_64-linux-gnu/libQt5Core.so.5 && \
-    cdo --version
-
-# Install o3as requirements
-COPY requirements.txt /tmp/
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt 
-
 # Clean up & back to dialog front end
-RUN apt-get autoremove -y && \
+    apt-get autoremove -y && \
     apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /root/.cache/pip/*
+    rm -rf /var/lib/apt/lists/*
 ENV DEBIAN_FRONTEND=dialog
+
+# Install user app:
+RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
+    cd  o3as && \
+# Install o3as requirements
+    pip install --no-cache-dir -e . && \
+ # Clean up    
+    rm -rf /root/.cache/pip/* && \
+    rm -rf /tmp/*
 
 # Set LANG environment
 ENV LANG C.UTF-8
 
 # Set the working directory
-WORKDIR /srv
-COPY src src
-RUN mkdir data && \ 
-    mkdir output
+WORKDIR /srv/o3as
 
 
 # Start default script
