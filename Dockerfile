@@ -47,9 +47,9 @@ ENV DEBIAN_FRONTEND=dialog
 
 # Install user app:
 RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
-    cd  o3as && \
+    cd o3as && \
 # Install o3as requirements
-    pip install --no-cache-dir -e . && \
+    pip3 install --no-cache-dir -e . && \
  # Clean up    
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
