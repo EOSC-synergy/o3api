@@ -47,11 +47,11 @@ ENV DEBIAN_FRONTEND=dialog
 WORKDIR /srv
 
 # Install user app:
-RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
+RUN git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
     cd o3as && \
 # Install o3as requirements
     pip3 install --no-cache-dir -e . && \
- # Clean up    
+# Clean up
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
 WORKDIR /srv/o3as
