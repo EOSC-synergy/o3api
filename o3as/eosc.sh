@@ -38,9 +38,9 @@ function usage()
 
 # Define default settings
 # define where the source data resides
-inpath=/srv/o3as/Data/raw/
+inpath=data/
 # define where the results will be stored
-outpath=/srv/o3as/Data/output/
+outpath=output/
 # select the start year
 beginyear=1980
 #select the end year
@@ -121,28 +121,30 @@ check_arguments "$0" "$@"
 file_list=()
 for i in $(seq ${beginyear} ${endyear}) ; do file_list+=(${inpath}/era-int_pl_${i}????.nc) ; done
 parallel cdo zonmean -selvar,o3 -sellevel,${level} {} ${outpath}{/.}_o3_${level}hPa_zm.nc :::  ${file_list[*]}
-#
+
 # 'cdo mergetime' does produce a memory timeout if all the files are merged at once, 
 # thus first merge all the data from one year:
 for i in $(seq ${beginyear} ${endyear}) ; do cdo -b 32 mergetime ${outpath}era-int_pl_${i}????_o3_${level}hPa_zm.nc ${outpath}era-int_pl_${i}_o3_${level}hPa_zm.nc ; done
 #for i in {${beginyear}..${endyear}} ; do cdo -b 32 mergetime ${outpath}era-int_pl_${i}????_o3_${level}hPa_zm.nc ${outpath}era-int_pl_${i}_o3_${level}hPa_zm.nc ; done
-#
+
 # clear some space by removing intermediate files:
 rm -f ${outpath}era-int_pl_????????_o3_${level}hPa_zm.nc
-#
+
 # now merge the files of the individual years:
 data_merged=${outpath}era-int_pl_o3_${level}hPa_zm-${beginyear}_${endyear}.nc
 cdo -O -b 32 mergetime ${outpath}era-int_pl_????_o3_${level}hPa_zm.nc ${data_merged}
-#
+
 # and remove the intermediate yearly files
 rm -f ${outpath}era-int_pl_????_o3_${level}hPa_zm.nc
-#
+
 # now we can process the results file, e.g. smoothing using a running mean
-#
+:
+
 # now we can plot the results file and the processed results file (at the moment all in one file):
 python3 "$SCRIPT_PATH/processing.py" --dataset ${data_merged}
-#
 ls -la $outpath/*pdf
+
 # now we can export the file to a web server
-#
+:
+
 # the end
