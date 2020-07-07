@@ -16,7 +16,7 @@ To build the image run the following command:
 ```sh
 $ docker build --pull --rm -f "Dockerfile" --build-arg {branch} -t o3as:{tag} "." 
 ```
-Note that branch 
+Note that 'branch' is the git brach of source code to run inside the container. Default is 'master'.
 
 
 To start a container which would process a data set, use the following:
