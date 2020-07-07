@@ -12,13 +12,20 @@ Description: TBD
 The most common way to run a container application would be using [docker](https://docs.docker.com/). 
 
 ## Using docker commands
+To build the image run the following command:
+```sh
+$ docker build --pull --rm -f "Dockerfile" --build-arg {branch} -t o3as:{tag} "." 
+```
+Note that branch 
+
+
 To start a container which would process a data set, use the following:
 ```sh
-docker run \
-    -v /path/to/data:/srv/data:ro \
-    -v /path/to/outputs:/srv/output \
-    o3as:latest \
-    /srv/o3as/eosc.sh [options]
+$ docker run \
+    -v /path/to/data:/srv/o3as/data:ro \
+    -v /path/to/output:/srv/o3as/output \
+    o3as:{tag} \
+    /srv/o3as/o3as/eosc.sh [options]
 ```
 
 ## Using docker compose
@@ -28,12 +35,15 @@ This section would be a good example of a working docker compose file:
 version: '3.7'
 services:
   o3as:
-    build: .
+    build:
+      context: .
+      args:
+        branch: your-branch
     volumes:
-        - /path/to/data:/srv/data:ro
-        - /path/to/outputs:/srv/output
+        - /path/to/data:/srv/o3as/data:ro
+        - /path/to/output:/srv/o3as/output
     entrypoint:
-        - /srv/src/eosc.sh 
+        - /srv/o3as/o3as/eosc.sh 
         - [options]
 ```
 
@@ -68,37 +78,35 @@ $ udocker install
 The standard way to work with udocker is:
 
 ### BUILD new image and PUSH to regisry
-In a computer where docker is installed, build and upload to a registry the image to download it later in the computer where to use udocker.
+In a **computer with docker installed**, build and upload to a registry the image to download it later in the computer where to use udocker.
 
 * `docker build --pull --rm -f "Dockerfile" -t o3as:{tag} "."` <br /> 
 To build the image on the directory where the file [Dockerfile](./Dockerfile) is located. Replace {tag} by a version identification.
 
-*  `docker push {your-registry}/o3as:{tag}` <br /> 
+* `docker push {your-registry}/o3as:{tag}` <br /> 
 To push the image to {your-registry} (In Docker hub for example).
 
 
 ### PULL image and CREATE Container
-In the computer where to run with udocker, download the image and create a container:
+In a **computer to run using udocker**, download the image and create a container:
 
-* `docker pull {your-registry}/o3as:{tag}` <br /> 
+* `udocker pull {your-registry}/o3as:{tag}` <br /> 
 To download the image from your registry.
 
-*  `docker create --name={container-name} {your-registry}/o3as:{tag}` <br /> 
+*  `udocker create --name={container-name} {your-registry}/o3as:{tag}` <br /> 
 To push the image to {your-registry} (In Docker hub for example).
 
 > NB: creating container may take 5-10 minutes...
 
-> `udocker setup --execmode=F3 o3as-ubuntu` <br />
-To change execmode.
 
 ### RUN the container
 In a similar way it would be done with docker, you can run:
 ```sh
 udocker run \
-    -v /path/to/data:/srv/data:ro \
-    -v /path/to/outputs:/srv/output \
+    -v /path/to/data:/srv/o3as/data:ro \
+    -v /path/to/output:/srv/o3as/output \
     {container-name} \
-    /srv/o3as/eosc.sh [options]
+    /srv/o3as/o3as/eosc.sh [options]
 ```
 Do not forget to indicate the correct path for your data and where to store the outputs.
 
