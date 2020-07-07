@@ -44,6 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 ENV DEBIAN_FRONTEND=dialog
+WORKDIR /srv
 
 # Install user app:
 RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
@@ -53,13 +54,10 @@ RUN git clone -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
  # Clean up    
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
+WORKDIR /srv/o3as
 
 # Set LANG environment
 ENV LANG C.UTF-8
-
-# Set the working directory
-WORKDIR /srv/o3as
-
 
 # Start default script
 CMD ["cdo", "--version"]
