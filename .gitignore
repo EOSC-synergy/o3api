@@ -4,8 +4,21 @@ __pycache__/
 *$py.class
 
 
+# Folders
+data/*
+!data/.gitignore
+output/*
+!output/.gitignore
+
+
 # IDEs
 
 ## vscode
 .vscode
+
+## emacs
+*~
+\#*\#
+*.elc
+.\#*
 
