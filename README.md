@@ -1,12 +1,16 @@
-Copyright (c) 2017 - 2019 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
-This code is distributed under the MIT License
-Please, see the LICENSE file
+O3AS - service to analyse ozone projections
+===========================================
 
-@authors: Valentin Kozlov, Borja Esteban
+Copyright (c) 2017 - 2019 Karlsruhe Institute of Technology - Steinbuch Centre for Computing.
+
+This code is distributed under the GNU LGPLv3 License. Please, see the LICENSE file
+
+@authors: Valentin Kozlov, Borja Esteban, Tobias Kerzenmacher
 
 # O3AS
 Description: TBD
 
+Docker images: synergyimk/o3as at https://hub.docker.com/u/synergyimk
 
 # Runing with docker
 The most common way to run a container application would be using [docker](https://docs.docker.com/). 
@@ -14,7 +18,7 @@ The most common way to run a container application would be using [docker](https
 ## Using docker commands
 To build the image run the following command:
 ```sh
-$ docker build --pull --rm -f "Dockerfile" --build-arg {branch} -t o3as:{tag} "." 
+$ docker build --pull --build-arg branch={branch} -t o3as:{tag} "." 
 ```
 Note that 'branch' is the git brach of source code to run inside the container. Default is 'master'.
 

@@ -27,11 +27,10 @@ def main():
 if __name__ == '__main__':
 
     # Define script parameters:
-    parser = argparse.ArgumentParser(description='Script parameters', 
-                                     add_help=False)
-    parser.add_argument('--dataset', type=str, default='/srv/o3as/Data/output/era-int_pl_o3_50hPa_zm.nc',
+    parser = argparse.ArgumentParser(description='Script parameters')
+    parser.add_argument('--dataset', type=str, default='/srv/o3as/output/era-int_pl_o3_50hPa_zm.nc',
                         help='Full path to the dataset file. Default is \
-                             /srv/o3as/Data/output/era-int_pl_o3_50hPa_zm.nc')
+                             /srv/o3as/output/era-int_pl_o3_50hPa_zm.nc')
     args = parser.parse_args()
     
     main()
