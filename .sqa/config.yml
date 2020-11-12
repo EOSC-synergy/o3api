@@ -1,0 +1,39 @@
+config:
+  project_repos:
+    o3as:
+      repo: 'https://git.scc.kit.edu/synergy.o3as/o3as.git'
+      branch: api
+      dockerhub: synergyimk/o3as
+      dockertag: latest
+
+sqa_criteria:
+  qc_style:
+    repos:
+      o3as:
+        container: o3as-testing
+        tox:
+          tox_file: /o3as-testing/tox.ini
+          testenv:
+            - pep8
+  qc_coverage:
+    repos:
+      o3as:
+        container: o3as-testing
+        tox:
+          tox_file: /o3as-testing/tox.ini
+          testenv: 
+            - cover
+            - cobertura
+  qc_security:
+    repos:
+      o3as:
+        container: o3as-testing
+        tox:
+          tox_file: /o3as-testing/tox.ini
+          testenv:
+            - bandit
+
+#environment:
+#  LANG: C.UTF-8
+
+timeout: 900

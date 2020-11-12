@@ -1,0 +1,10 @@
+version: "3.6"
+
+services:
+  o3as-testing:
+    image: "indigodatacloud/ci-images:python3.6"
+    hostname: "o3as-testing"
+    volumes:
+     - type: bind
+       source: ./o3as
+       target: /o3as-testing

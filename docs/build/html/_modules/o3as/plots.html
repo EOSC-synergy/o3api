@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>o3as.plots &#8212; O3as REST API 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for o3as.plots</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2017 - 2020 Karlsruhe Institute of Technology - Steinbuch Centre for Computing</span>
+<span class="c1"># This code is distributed under the MIT License</span>
+<span class="c1"># Please, see the LICENSE file</span>
+<span class="c1">#</span>
+<span class="c1"># @author: vykozlov</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">o3as.config</span> <span class="k">as</span> <span class="nn">cfg</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;__name__&#39;</span><span class="p">)</span> <span class="c1">#o3asplot</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">log_level</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Dataset"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.Dataset">[docs]</a><span class="k">class</span> <span class="nc">Dataset</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base Class to initialize the dataset</span>
+
+<span class="sd">    :param plot_type: The plot type (e.g. tco3_zm, vmro3_zm, ...)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor method</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="n">plot_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_pattern</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">+</span> <span class="s2">&quot;*_????.nc&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datafiles</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+    <span class="k">def</span> <span class="nf">__set_datafiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the list of corresponding datafiles</span>
+
+<span class="sd">        :param model: The model to process</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datafiles</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">O3AS_DATA_BASEPATH</span><span class="p">,</span> 
+                                       <span class="n">model</span><span class="p">,</span> 
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_data_pattern</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dataset.get_dataset"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.Dataset.get_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">get_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load data from the datafile list</span>
+
+<span class="sd">        :param model: The model to process</span>
+<span class="sd">        :return: xarray dataset</span>
+<span class="sd">        :rtype: xarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check: http://xarray.pydata.org/en/stable/dask.html#chunking-and-performance</span>
+        <span class="c1"># chunks={&#39;latitude&#39;: 8} - very machine dependent!</span>
+        <span class="c1"># laptop (RAM 8GB) : 8, lsdf-gpu (128GB) : 64</span>
+        <span class="c1"># engine=&#39;h5netcdf&#39; : need h5netcdf files? yes, but didn&#39;t see improve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_datafiles</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;O3AS_CHUNK_SIZE&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Chunk Size: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">chunk_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_mfdataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datafiles</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="n">chunk_size</span> <span class="p">},</span>
+                                   <span class="n">concat_dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span>
+                                   <span class="n">data_vars</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span>
+                                   <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_mfdataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_datafiles</span><span class="p">,</span>
+                                   <span class="n">concat_dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span>
+                                   <span class="n">data_vars</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span>
+                                   <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds</span></div></div>
+
+    
+<div class="viewcode-block" id="DataSelection"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.DataSelection">[docs]</a><span class="k">class</span> <span class="nc">DataSelection</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to perform data selection, based on :class:`Dataset`.</span>
+
+<span class="sd">    :param b_year: Year to start data scanning from</span>
+<span class="sd">    :param e_year: Year to finish data scanning</span>
+<span class="sd">    :param lat_min: Minimum latitude to define the range (-90..90)</span>
+<span class="sd">    :param lat_max: Maximum latitude to define the range (-90..90)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor method</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">plot_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_year</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;begin_year&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_year</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;end_year&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lat_min</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;lat_min&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lat_max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;lat_max&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__check_latitude_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function to check the latitude order</span>
+
+<span class="sd">        :param ds: xarray dataset to check</span>
+<span class="sd">        :return: lat_0, lat_last</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lat_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># min latitude</span>
+        <span class="n">lat_last</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c1"># max latitude</span>
+
+        <span class="k">return</span> <span class="n">lat_0</span><span class="p">,</span> <span class="n">lat_last</span>
+
+        
+<div class="viewcode-block" id="DataSelection.get_dataslice"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.DataSelection.get_dataslice">[docs]</a>    <span class="k">def</span> <span class="nf">get_dataslice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function to select the slice of data according </span>
+<span class="sd">        to the time and latitude requested</span>
+
+<span class="sd">        :param model: The model to process</span>
+<span class="sd">        :return: xarray dataset selected according to the time and latitude</span>
+<span class="sd">        :rtype: xarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Dataset is loaded from storage location: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds</span><span class="p">))</span>
+        <span class="c1"># check in what order latitude is used, e.g. (-90..90) or (90..-90)</span>
+        <span class="n">lat_0</span><span class="p">,</span> <span class="n">lat_last</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__check_latitude_order</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;ds: lat_0 = </span><span class="si">{}</span><span class="s2">, lat_last: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lat_0</span><span class="p">,</span> <span class="n">lat_last</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">lat_0</span> <span class="o">&lt;</span> <span class="n">lat_last</span><span class="p">:</span>
+            <span class="n">lat_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat_min</span>
+            <span class="n">lat_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat_max</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lat_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat_max</span>
+            <span class="n">lat_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat_min</span>
+
+        <span class="c1"># select data according to the period and latitude</span>
+        <span class="c1"># BUG(?) ccmi-umukca-ucam complains about 31-12-year, but 30-12-year works</span>
+        <span class="n">ds_slice</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="n">time</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">-01-01T00:00:00&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_year</span><span class="p">),</span> 
+                                     <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">-12-30T23:59:59&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_year</span><span class="p">)),</span>
+                          <span class="n">lat</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="n">lat_a</span><span class="p">,</span>
+                                    <span class="n">lat_b</span><span class="p">))</span>  <span class="c1"># latitude</span>
+                                     
+        <span class="k">return</span> <span class="n">ds_slice</span></div></div>
+
+
+<div class="viewcode-block" id="set_data_processing"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.set_data_processing">[docs]</a><span class="k">def</span> <span class="nf">set_data_processing</span><span class="p">(</span><span class="n">plot_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Function to inizialize proper class for data processing</span>
+
+<span class="sd">    :param plot_type: The plot type (e.g. tco3_zm, vmro3_zm, ...)</span>
+<span class="sd">    :return: object corresponding to the plot type</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;tco3_zm&#39;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ProcessForTCO3</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;vmro3_zm&#39;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ProcessForVMRO3</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;tco3_return&#39;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ProcessForTCO3Return</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">data</span></div>
+
+<div class="viewcode-block" id="ProcessForTCO3"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.ProcessForTCO3">[docs]</a><span class="k">class</span> <span class="nc">ProcessForTCO3</span><span class="p">(</span><span class="n">DataSelection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Subclass of :class:`DataSelection` to calculate tco3_zm</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s1">&#39;tco3_zm&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProcessForTCO3.get_plot_data"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.ProcessForTCO3.get_plot_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_plot_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process the model to get tco3_zm data for plotting</span>
+
+<span class="sd">        :param model: The model to process for tco3_zm</span>
+<span class="sd">        :return: xarray dataset for plotting</span>
+<span class="sd">        :rtype: xarray        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># data selection according to time and latitude</span>
+        <span class="n">ds_slice</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_dataslice</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">ds_tco3</span> <span class="o">=</span> <span class="n">ds_slice</span><span class="p">[[</span><span class="s2">&quot;tco3_zm&quot;</span><span class="p">]]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;ds_tco3: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_tco3</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">ds_tco3</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="ProcessForVMRO3"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.ProcessForVMRO3">[docs]</a><span class="k">class</span> <span class="nc">ProcessForVMRO3</span><span class="p">(</span><span class="n">DataSelection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Subclass of :class:`DataSelection` to calculate vmro3_zm</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s1">&#39;vmro3_zm&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProcessForVMRO3.get_plot_data"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.ProcessForVMRO3.get_plot_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_plot_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process the model to get vmro3_zm data for plotting</span>
+
+<span class="sd">        :param model: The model to process for vmro3_zm</span>
+<span class="sd">        :return: xarray dataset for plotting</span>
+<span class="sd">        :rtype: xarray        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># data selection according to time and latitude</span>
+        <span class="n">ds_slice</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_dataslice</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="c1"># currently placeholder. another calculation might be needed</span>
+        <span class="c1"># 20-10-07 vkoz</span>
+        <span class="n">ds_vmro3</span> <span class="o">=</span> <span class="n">ds_slice</span><span class="p">[[</span><span class="s2">&quot;vmro3_zm&quot;</span><span class="p">]]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;ds_vmro3: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_vmro3</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">ds_vmro3</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span></div></div>
+        
+
+<div class="viewcode-block" id="ProcessForTCO3Return"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.ProcessForTCO3Return">[docs]</a><span class="k">class</span> <span class="nc">ProcessForTCO3Return</span><span class="p">(</span><span class="n">DataSelection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Subclass of :class:`DataSelection` to calculate tco3_return</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s1">&#39;tco3_return&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProcessForTCO3Return.get_plot_data"><a class="viewcode-back" href="../../o3ascode.html#o3as.plots.ProcessForTCO3Return.get_plot_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_plot_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process the model to get tco3_return data for plotting</span>
+
+<span class="sd">        :param model: The model to process for tco3_return</span>
+<span class="sd">        :return: xarray dataset for plotting</span>
+<span class="sd">        :rtype: xarray        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># data selection according to time and latitude</span>
+        <span class="n">ds_slice</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_dataslice</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="c1"># currently placeholder. another calculation might be needed</span>
+        <span class="c1"># 20-10-07 vkoz</span>
+        <span class="n">ds_tco3_return</span> <span class="o">=</span> <span class="n">ds_slice</span><span class="p">[[</span><span class="s2">&quot;tco3_return&quot;</span><span class="p">]]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;ds_tco3_return: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_tco3_return</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">ds_tco3_return</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">O3as REST API</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../o3ascode.html">Documentation for the Code</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, B.Esteban, T.Kerzenmacher, V.Kozlov (KIT).
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
