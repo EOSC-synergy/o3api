@@ -5,7 +5,7 @@ This code is distributed under the GNU LGPLv3 License. Please, see the LICENSE f
 @authors: Valentin Kozlov, Borja Esteban, Tobias Kerzenmacher (KIT)
 
 # O3AS service
-[![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3as%2Ftest)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3as/job/test/)
+[![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3as%2Ftest)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3as/job/test/) [![Documentation Status](https://readthedocs.org/projects/o3as/badge/?version=latest)](https://o3as.readthedocs.io/en/latest/?badge=latest)
 
 O3AS is a service for Ozone (O3) Assessment, http://o3as.data.kit.edu/
 
