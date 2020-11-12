@@ -1,0 +1,35 @@
+# 2020-10-08 does not fully work...
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: o3as-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  rules:
+  - host: o3as.test.fedcloud.eu
+    http:
+      paths:
+      - path: /?(.*)
+        backend:
+          serviceName: o3as-service
+          servicePort: 5005
+
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  name: rewrite
+  namespace: default
+spec:
+  rules:
+  - host: rewrite.bar.com
+    http:
+      paths:
+      - backend:
+          serviceName: http-svc
+          servicePort: 80
+        path: /something(/|$)(.*)

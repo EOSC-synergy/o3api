@@ -11,6 +11,10 @@ output/*
 !output/.gitignore
 
 
+# Branch
+.gitlab 
+
+
 # IDEs
 
 ## vscode

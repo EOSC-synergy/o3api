@@ -1,0 +1,175 @@
+swagger: "2.0"
+info:
+  description: This is the swagger file that goes with our server code
+  version: "1.0.0"
+  title: Swagger REST o3as
+consumes:
+  - "application/json"
+
+basePath: "/api"
+
+# Paths supported by the server application
+paths:
+  /get_metadata:
+    post:
+      operationId: "o3as.api.get_metadata"
+      tags:
+        - "get_metadata"
+      summary: "Returning information about the service"
+      description: "Return O3as info"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Successfully returned O3as information"
+          schema:
+            $ref: '#/definitions/MetaInfo'
+  /get_model_info:
+    post:
+      operationId: "o3as.api.get_model_info"
+      tags:
+        - "get_model_info"
+      summary: "Returning information about a model"
+      description: "Return model info"
+      produces:
+        - "application/json"
+      parameters:
+        - name: type
+          in: query
+          type: string
+          description: Plot type (tco3_zm, vmro3_zm, ...)
+          default: "tco3_zm"
+          required: true
+        - name: model
+          in: query
+          type: string
+          description: model name
+          default: CCMI-1_ACCESS-refC2
+          required: true
+      responses:
+        200:
+          description: "Successfully returned model information"
+          schema:
+            $ref: '#/definitions/ModelInfo'
+  /list_models:
+    post:
+      operationId: "o3as.api.list_models"
+      tags:
+        - "list_models"
+      summary: "Returning list of available models"
+      description: "Return list of models"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Successfully returned list of models"
+          schema:
+            $ref: '#/definitions/ListModels'
+  /plot:
+    post:
+      operationId: "o3as.api.plot"
+      tags:
+        - "plot"
+      summary: "Making a plot supported by the server application"
+      description: "Create a plot (tco, ...)"
+      produces:
+        - "application/pdf"
+        - "application/json"
+      parameters:
+        - name: type
+          in: query
+          type: string
+          description: Plot type (tco3_zm, vmro3_zm, ...)
+          default: "tco3_zm"
+          required: true
+        - name: models
+          in: query
+          type: array
+          items:
+            type: string
+          description: Names of models (dataset-model)
+          default: [CCMI-1_ACCESS-refC2,CCMI-1_CCCma-CMAM-refC2,CCMI-1_CHASER-MIROC-ESM-refC2]
+          required: true
+        - name: begin_year
+          in: query
+          type: integer
+          description: Year to start data scanning from
+          default: 1979
+          required: false
+        - name: end_year
+          in: query
+          type: integer
+          description: Year to finish data scanning
+          default: 2019
+          required: false
+        - name: lat_min
+          in: query
+          type: integer
+          description: Latitude (min) to define the range (-90..90)
+          required: false
+        - name: lat_max
+          in: query
+          type: integer
+          description: Latitude (max) to define the range (-90..90)
+          required: false
+      responses:
+        200:
+          description: "Successfully created a plot"
+          schema:
+            type: file
+          schema:
+            $ref: '#/definitions/Data'
+#        default:
+#          description: "Unexpected error"
+#          schema:
+#            $ref: "#/definitions/Error"
+definitions:
+  Data:
+    type: array
+    items:        
+      properties:
+        plot_type:
+          type: string
+        model:
+          type: string
+        x:
+          type: array
+        y:
+          type: array
+  Error:
+    type: string
+  MetaInfo:
+    type: object
+    properties:
+      author:
+        type: string
+      author-email:
+        type: string
+      home-page:
+        type: string
+      license:
+        type: string
+      name:
+        type: string
+      summary:
+        type: string
+      version:
+        type: string
+  ListModels:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          type: string
+  ModelInfo:
+    type: object
+    properties:
+      name:
+        type: string
+      attrs:
+        type: string
+      dims:
+        type: string
+      coords:
+        type: string
