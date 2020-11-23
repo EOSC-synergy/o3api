@@ -13,9 +13,9 @@ import os
 log_level = logging.DEBUG
 
 # Base path for data
-# Default is /srv/o3as/data/
+# Default is /srv/o3api/data/
 # But one can change using environment $O3AS_DATA_BASEPATH
-O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', "/srv/o3as/data/")
+O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', "/srv/o3api/data/")
 
 # list of trusted OIDC providers
 trusted_OP_list = [

@@ -17,7 +17,7 @@ ARG tag=stable-slim
 FROM ${base}:${tag}
 
 LABEL maintainer='B.Esteban, T.Kerzenmacher, V.Kozlov (KIT)'
-# o3as scripts to process and plot data
+# REST API for the O3as service to process and plot O3 data
 
 # What user branch to clone (!)
 ARG branch=master
@@ -41,23 +41,23 @@ ENV DEBIAN_FRONTEND=dialog
 WORKDIR /srv
 
 # Install user app:
-RUN git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3as.git && \
-# Install o3as
-    cd o3as && \
+RUN git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3api.git && \
+# Install o3api
+    cd o3api && \
     pip3 install --no-cache-dir -e . && \
     pip3 install --no-cache-dir gunicorn && \
 # Clean up
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*
-WORKDIR /srv/o3as
+WORKDIR /srv/o3api
 
 # Set environments
-ENV PYTHONPATH=/srv/o3as
+ENV PYTHONPATH=/srv/o3api
 ENV LANG C.UTF-8
 
 ENV ENABLE_HTTPS False
-ENV O3AS_WORKERS 1
-ENV O3AS_TIMEOUT 120
+ENV O3API_WORKERS 1
+ENV O3API_TIMEOUT 120
 
 # Disable FLAAT authentication by default
 ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
@@ -65,4 +65,4 @@ ENV DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER yes
 EXPOSE 5005
 
 # Start default script
-CMD ["/bin/bash", "/srv/o3as/start.sh"]
+CMD ["/bin/bash", "/srv/o3api/start.sh"]

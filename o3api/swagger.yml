@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   description: This is the swagger file that goes with our server code
   version: "1.0.0"
-  title: Swagger REST o3as
+  title: Swagger REST API for O3as
 consumes:
   - "application/json"
 
@@ -12,21 +12,21 @@ basePath: "/api"
 paths:
   /get_metadata:
     post:
-      operationId: "o3as.api.get_metadata"
+      operationId: "o3api.api.get_metadata"
       tags:
         - "get_metadata"
       summary: "Returning information about the service"
-      description: "Return O3as info"
+      description: "Return o3api metadata"
       produces:
         - "application/json"
       responses:
         200:
-          description: "Successfully returned O3as information"
+          description: "Successfully returned o3api info"
           schema:
             $ref: '#/definitions/MetaInfo'
   /get_model_info:
     post:
-      operationId: "o3as.api.get_model_info"
+      operationId: "o3api.api.get_model_info"
       tags:
         - "get_model_info"
       summary: "Returning information about a model"
@@ -53,7 +53,7 @@ paths:
             $ref: '#/definitions/ModelInfo'
   /list_models:
     post:
-      operationId: "o3as.api.list_models"
+      operationId: "o3api.api.list_models"
       tags:
         - "list_models"
       summary: "Returning list of available models"
@@ -67,7 +67,7 @@ paths:
             $ref: '#/definitions/ListModels'
   /plot:
     post:
-      operationId: "o3as.api.plot"
+      operationId: "o3api.api.plot"
       tags:
         - "plot"
       summary: "Making a plot supported by the server application"

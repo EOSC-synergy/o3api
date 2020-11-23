@@ -6,15 +6,25 @@
 O3as REST API
 ===============
 
+O3as REST API provides access to O3as (Ozone assessment) data for plotting and high-level analysis. 
+The API leverages `Swagger <https://swagger.io/>`_, 
+`Flask <https://pypi.org/project/Flask/>`_, and 
+`Connexion <https://pypi.org/project/connexion/>`_.
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   o3ascode
+   o3apirefs
+
+See also
+=========================================
 
 Indices and tables
-==================
+---------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

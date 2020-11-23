@@ -1,18 +1,18 @@
 version: '3.7'
 
 services:
-  o3as:
-    image: synergyimk/o3as:api
+  o3api:
+    image: synergyimk/o3api
     build:
       context: .
       args:
-        branch: api
+        branch: master
     volumes:
-        - $HOME/datasets/o3as-data:/srv/o3as/data:ro
+        - $HOME/datasets/o3as-data:/srv/o3api/data:ro
     ports:
         - 5005:5005
     entrypoint:
-        - /srv/o3as/start.sh
+        - /srv/o3api/start.sh
 
 # To run with an existing Docker image:
 # `$ docker-compose up -d

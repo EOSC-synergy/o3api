@@ -25,9 +25,9 @@
 #       e.g. raise OSError("no files to open")
 
 
-import o3as.config as cfg
-import o3as.plothelpers as phlp
-import o3as.plots as o3plots
+import o3api.config as cfg
+import o3api.plothelpers as phlp
+import o3api.plots as o3plots
 import json
 import logging
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ from io import BytesIO
 from statsmodels.tsa.seasonal import seasonal_decompose # accurate enough
 
 # conigure python logger
-logger = logging.getLogger('__name__') #o3asplot
+logger = logging.getLogger('__name__') #o3api
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(cfg.log_level)
 
@@ -129,7 +129,7 @@ def _catch_error(f):
 def get_metadata(*args, **kwargs):
     """Return information about the package
 
-    :return: The o3as package info
+    :return: The o3api package info
     :rtype: dict
     """
     module = __name__.split('.', 1)
@@ -166,7 +166,7 @@ def list_models(*args, **kwargs):
     """
     models = []
     for mdir in os.listdir(cfg.O3AS_DATA_BASEPATH):
-        m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, mdir) 
+        m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, mdir)
         if (os.path.isdir(m_path)):
             netcdf_ok = False
             for f in os.listdir(m_path):
