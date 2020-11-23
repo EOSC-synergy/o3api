@@ -6,12 +6,12 @@
 #
 # @author: vykozlov
 
-import o3as.config as cfg
+import o3api.config as cfg
 import logging
 import numpy as np
 
 # conigure python logger
-logger = logging.getLogger('__name__') #o3asplot
+logger = logging.getLogger('__name__') #o3api
 logger.setLevel(cfg.log_level)
 
 pconf = cfg.plot_conf

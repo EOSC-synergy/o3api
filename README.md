@@ -4,10 +4,10 @@ This code is distributed under the GNU LGPLv3 License. Please, see the LICENSE f
 
 @authors: Valentin Kozlov, Borja Esteban, Tobias Kerzenmacher (KIT)
 
-# O3AS service
-[![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3as%2Fmaster)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3as/job/master/) [![Documentation Status](https://readthedocs.org/projects/o3as/badge/?version=latest)](https://o3as.readthedocs.io/en/latest/?badge=latest)
+# REST API for the O3as service
+[![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3api%2Fmaster)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3api/job/master/) [![Documentation Status](https://readthedocs.org/projects/o3as/badge/?version=latest)](https://o3as.readthedocs.io/en/latest/?badge=latest)
 
-O3AS is a service for Ozone (O3) Assessment, http://o3as.data.kit.edu/
+O3as is a service for Ozone (O3) Assessment, http://o3as.data.kit.edu/
 
 Description: *to come...*
 
@@ -20,8 +20,8 @@ The most common way to run a container application would be using [docker](https
 To start a container which would provide REST API to process a data set, use the following:
 ```sh
 docker run \
-    -v /path/to/data:/srv/o3as/data:ro \
-    synergyimk/o3as:{tag} \
+    -v /path/to/data:/srv/o3api/data:ro \
+    synergyimk/o3api:{tag} \
 ```
 where `tag = latest or api`
 
@@ -31,18 +31,18 @@ This section would be a good example of a working docker compose file:
 ```yml
 version: '3.7'
 services:
-  o3as:
-    image: synergyimk/o3as:{tag}
+  o3api:
+    image: synergyimk/o3api:{tag}
     build:
       context: .
       args:
         branch: {tag}
     volumes:
-        - /path/to/data:/srv/o3as/data:ro
+        - /path/to/data:/srv/o3api/data:ro
     ports:
         - 5005:5005
     entrypoint:
-        - /srv/o3as/start.sh 
+        - /srv/o3api/start.sh 
 ```
 
 * To start run: `$ docker-compose -f "file_name.yml" up -d --build`
@@ -77,10 +77,10 @@ The standard way to work with udocker is:
 ### PULL the provided Docker image and CREATE Container
 In the computer where to run with udocker, download the image and create a container:
 
-* `udocker pull synergyimk/o3as:{tag}` <br /> 
+* `udocker pull synergyimk/o3api:{tag}` <br /> 
 To download the image from the Docker Hub registry.
 
-*  `udocker create --name={container-name} synergyimk/o3as:{tag}` <br /> 
+*  `udocker create --name={container-name} synergyimk/o3api:{tag}` <br /> 
 To create the corresponding container on your system.
 
 > NB: creating container may take 5-10 minutes...
@@ -92,7 +92,7 @@ To change execmode, if needed
 In a similar way it would be done with docker, you can run:
 ```sh
 udocker run \
-    -v /path/to/data:/srv/o3as/data:ro \
+    -v /path/to/data:/srv/o3api/data:ro \
     {container-name}
 ```
 Do not forget to indicate the correct path for your data and where to store the outputs.
@@ -101,8 +101,8 @@ If you like to re-build Docker image:
 ### BUILD new image and PUSH to regisry
 In a computer where docker is installed, build and upload to a registry the image to download it later in the computer where to use udocker.
 
-* `docker build --pull --rm -t {your-registry}/o3as:{tag} "."` <br /> 
+* `docker build --pull --rm -t {your-registry}/o3api:{tag} "."` <br /> 
 To build the image on the directory where the file [Dockerfile](./Dockerfile) is located. Replace {tag} by a version identification.
 
-*  `docker push {your-registry}/o3as:{tag}` <br /> 
+*  `docker push {your-registry}/o3api:{tag}` <br /> 
 To push the image to {your-registry} (In Docker hub for example).

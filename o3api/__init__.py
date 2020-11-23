@@ -6,8 +6,8 @@ import logging
 
 logger = logging.getLogger('__name__')
 
-o3as_listen_ip = getenv('O3AS_LISTEN_IP', '127.0.0.1')
-o3as_port = getenv('O3AS_PORT', 5005)
+o3api_listen_ip = getenv('O3API_LISTEN_IP', '127.0.0.1')
+o3api_port = getenv('O3API_PORT', 5005)
 
 # Create the application instance
 app = connexion.FlaskApp(__name__, specification_dir='./')
@@ -38,13 +38,13 @@ def home():
     """This function just responds to the browser URL localhost:5000/
     :return:        the rendered template 'home.html'
     """
-    logger.debug("O3AS_LISTEN_IP:O3AS_PORT = {}:{}".format(o3as_listen_ip, 
-                                                     o3as_port))
+    logger.debug("O3API_LISTEN_IP:O3API_PORT = {}:{}".format(o3api_listen_ip, 
+                                                     o3api_port))
 
     return render_template('index.html')
 
 # from app import routes
 
 if __name__ == "__main__":
-    app.run(host=o3as_listen_ip,
-            port=o3as_port)
+    app.run(host=o3api_listen_ip,
+            port=o3api_port)

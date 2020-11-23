@@ -8,14 +8,14 @@
 # @author: vykozlov
 #
 
-DOCKER_IMAGE=synergyimk/o3as:api
-DOCKER_CONTAINER="o3as-api"
+DOCKER_IMAGE=synergyimk/o3api
+DOCKER_CONTAINER="o3api"
 
 # Directories at your host for the raw data and outputs
 HOST_DATA=$HOME/datasets/o3as-data
 
 # mount necessary host directories inside container
-DOCKER_OPTIONS="-v $HOST_DATA:/srv/o3as/data \
+DOCKER_OPTIONS="-v $HOST_DATA:/srv/o3api/data \
 -p 5005:5005 \
 -e WORKERS=1 \
 -e DISABLE_AUTHENTICATION_AND_ASSUME_AUTHENTICATED_USER=yes"

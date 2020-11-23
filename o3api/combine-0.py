@@ -12,7 +12,7 @@ import os
 import time
 import xarray as xr
 
-logger = logging.getLogger('__name__') #o3asplot
+logger = logging.getLogger('__name__') #o3api
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(logging.DEBUG)
 

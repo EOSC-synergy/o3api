@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: o3as-api
+  name: o3api-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: o3as-api
+      name: o3api-test
   template:
     metadata:
       labels:
-        name: o3as-api
+        name: o3api-test
     spec:
-      nodeName: vnode-1.localdomain
+      nodeName: vnode-2.localdomain
       #nodeSelector:
       #  node-role.kubernetes.io/master: ''
       containers:
-      - name: o3as-api
-        image: synergyimk/o3as:test
+      - name: o3api-test
+        image: synergyimk/o3api:test
         imagePullPolicy: Always
         resources:
           requests:
@@ -34,20 +34,20 @@ spec:
         #  effect: NoSchedule
         env:
         - name: O3AS_DATA_BASEPATH
-          value: /mnt/o3as-data/Skimmed
-        - name: O3AS_TIMEOUT
+          value: /mnt/o3as-sshfs/
+        - name: O3API_TIMEOUT
           value: "600"
         #  valueFrom: 
         #    secretKeyRef:
         #      name: jupyter-pass
         #      key: jpassword
         volumeMounts:
-        - mountPath: /mnt/o3as-data
-          name: o3as-data
+        - mountPath: /mnt/o3as-sshfs
+          name: o3as-sshfs
       volumes:
-      - name: o3as-data
+      - name: o3as-sshfs
         hostPath:
-          path: /mnt/o3as-data
+          path: /mnt/o3as-sshfs
           type: Directory
 
 # Service
@@ -55,13 +55,13 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: o3as-service
+  name: o3api-service-test
 spec:
   selector:
-    name: o3as-api
+    name: o3api-test
   ports:
     - protocol: TCP
       name: http2
       port: 5005
-      nodePort: 30505
+      nodePort: 30509
   type: NodePort

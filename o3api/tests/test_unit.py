@@ -14,10 +14,10 @@ import pandas as pd
 import pkg_resources
 import xarray as xr
 import unittest
-from o3as import api as o3api
-from o3as import config as cfg
-from o3as import plots as o3plots
-from o3as import plothelpers as phlp
+from o3api import api as o3api
+from o3api import config as cfg
+from o3api import plots as o3plots
+from o3api import plothelpers as phlp
 
 class TestPackageMethods(unittest.TestCase):
 
@@ -27,10 +27,10 @@ class TestPackageMethods(unittest.TestCase):
 
         # Check package meta info
         self.meta = {
-            'name' : 'o3as',
+            'name' : 'o3api',
             'version' : None,
-            'summary' : 'O3AS service to analyse ozone projections',
-            'home-page' : 'https://git.scc.kit.edu/synergy.o3as/o3as',
+            'summary' : 'REST API for the O3as service to analyse Ozone projections',
+            'home-page' : 'https://git.scc.kit.edu/synergy.o3as/o3api',
             'author' : 'KIT-IMK, KIT-SCC',
             'author-email' : 'tobias.kerzenmacher@kit.edu, borja.sanchis@kit.edu, valentin.kozlov@kit.edu',
             'license' : 'GNU LGPLv3'
@@ -60,9 +60,9 @@ class TestPackageMethods(unittest.TestCase):
         begin_year = end_year - delta_years
 
         data_base_path = "tmp/data"
-        #os.environ["O3AS_DATA_BASEPATH"] = self.data_base_path
+        #os.environ["O3API_DATA_BASEPATH"] = self.data_base_path
         cfg.O3AS_DATA_BASEPATH = data_base_path
-        model = "o3as-test"
+        model = "o3api-test"
         ptype = 'tco3_zm'
         test_dir = os.path.join(data_base_path, model) 
         test_path  = os.path.join(test_dir, ptype + "_skim_" + 

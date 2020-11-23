@@ -8,7 +8,7 @@
 
 import glob
 import numpy as np
-import o3as.config as cfg
+import o3api.config as cfg
 import os
 import logging
 import xarray as xr
@@ -18,7 +18,7 @@ import io
 import pstats
 from functools import wraps
 
-logger = logging.getLogger('__name__') #o3asplot
+logger = logging.getLogger('__name__') #o3api
 logger.setLevel(cfg.log_level)
 
 def _profile(func):
@@ -90,7 +90,7 @@ class Dataset:
         # parallel=True : in theory should use dask.delayed 
         #                 to open and preprocess in parallel. Default is False
         self.__set_datafiles(model)
-        chunk_size = int(os.getenv('O3AS_CHUNK_SIZE', -1))
+        chunk_size = int(os.getenv('O3API_CHUNK_SIZE', -1))
         logger.debug("Chunk Size: {}".format(chunk_size))
 
         if chunk_size > 0:
