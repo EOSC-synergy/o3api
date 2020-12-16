@@ -1,6 +1,6 @@
 # Dockerfile has three Arguments: base, tag, branch
-# base - base image (default: debian, optional: ubuntu)
-# tag - tag for base mage (default: stable-slim)
+# base - base image (default: ubuntu, optional: debian)
+# tag - tag for base mage (default: 20.04, optional: stable-slim)
 # branch - user repository branch to clone (default: master, other option: test)
 #
 # To build the image:
@@ -9,9 +9,9 @@
 # $ docker build -t <dockerhub_user>/<dockerhub_repo> .
 
 # set the base image. default is debian, optional ubuntu
-ARG base=debian
-# set the tag (e.g. latest, stable, stable-slim : for debian)
-ARG tag=stable-slim
+ARG base=ubuntu
+# set the tag (e.g. 20.04, latest, stable, stable-slim (for debian) )
+ARG tag=20.04
 
 # Base image, e.g. debian:stable or ubuntu:bionic
 FROM ${base}:${tag}
@@ -30,6 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         nano \
         procps \
 # Install system updates and tools
+        #gcc \          # multidic needs in the case of debian
+        #python3-dev \  # multidic needs in the case of debian
         python3-setuptools \
         python3-pip \
         python3-wheel && \

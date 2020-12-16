@@ -5,20 +5,44 @@ __pycache__/
 
 
 # Folders
+.eggs/
+eggs/
+*.egg-info/
+sdist/
 data/*
 !data/.gitignore
 output/*
 !output/.gitignore
 
+# Sphinx documentation
+docs/_build/*
 
 # Branch
 .gitlab 
 
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+.stestr
+nosetests.xml
+coverage.xml
+*,cover
 
 # IDEs
+# Pycharm
+.idea
 
-## vscode
-.vscode
+# VS Code
+.vscode/
+
+# Spyder
+.spyproject/
+
+# Jupyter NB Checkpoints
+.ipynb_checkpoints/
 
 ## emacs
 *~

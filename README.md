@@ -21,9 +21,9 @@ To start a container which would provide REST API to process a data set, use the
 ```sh
 docker run \
     -v /path/to/data:/srv/o3api/data:ro \
-    synergyimk/o3api:{tag} \
+    o3as/o3api:{tag} \
 ```
-where `tag = latest or api`
+where `tag = latest`
 
 
 ## Using docker compose
@@ -32,7 +32,7 @@ This section would be a good example of a working docker compose file:
 version: '3.7'
 services:
   o3api:
-    image: synergyimk/o3api:{tag}
+    image: o3as/o3api:{tag}
     build:
       context: .
       args:
@@ -77,10 +77,10 @@ The standard way to work with udocker is:
 ### PULL the provided Docker image and CREATE Container
 In the computer where to run with udocker, download the image and create a container:
 
-* `udocker pull synergyimk/o3api:{tag}` <br /> 
+* `udocker pull o3as/o3api:{tag}` <br /> 
 To download the image from the Docker Hub registry.
 
-*  `udocker create --name={container-name} synergyimk/o3api:{tag}` <br /> 
+*  `udocker create --name={container-name} o3as/o3api:{tag}` <br /> 
 To create the corresponding container on your system.
 
 > NB: creating container may take 5-10 minutes...
