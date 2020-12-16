@@ -30,6 +30,8 @@ import o3api.plothelpers as phlp
 import o3api.plots as o3plots
 import json
 import logging
+import matplotlib.style as mplstyle
+mplstyle.use('fast') # faster?
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -47,7 +49,6 @@ from flask import jsonify, make_response, request
 from fpdf import FPDF
 from functools import wraps
 from io import BytesIO
-from statsmodels.tsa.seasonal import seasonal_decompose # accurate enough
 
 # conigure python logger
 logger = logging.getLogger('__name__') #o3api
@@ -61,8 +62,17 @@ flaat = Flaat()
 # list of trusted OIDC providers
 flaat.set_trusted_OP_list(cfg.trusted_OP_list)
 
+# configuration for API
+PTYPE = cfg.api_conf['plot_t']
+MODEL = cfg.api_conf['model']
+BEGIN = cfg.api_conf['begin']
+END = cfg.api_conf['end']
+MONTH = cfg.api_conf['month']
+LAT_MIN = cfg.api_conf['lat_min']
+LAT_MAX = cfg.api_conf['lat_max']
+
 # configuration for plotting
-pconf = cfg.plot_conf
+plot_c = cfg.plot_conf
 
 
 def _profile(func):
@@ -123,6 +133,19 @@ def _catch_error(f):
             logger.debug("Response: {}".format(dict(response.headers)))
             return response
 
+    return wrap
+
+def _timeit(func):
+    """Measure time of the function
+    """
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        time_model = time.time()
+        f = func(*args, **kwargs)
+        time_described = time.time()
+        logger.debug("[TIME] One model processed: {}".format(time_described - 
+                                                             time_model))
+        return f
     return wrap
 
 @_catch_error
@@ -187,15 +210,15 @@ def get_model_info(*args, **kwargs):
     :return: Info about the Ozone model
     :rtype: dict
     """
-    plot_type = kwargs['type']
-    model = kwargs['model'].lstrip().rstrip()
+    plot_type = kwargs[PTYPE]
+    model = kwargs[MODEL].lstrip().rstrip()
 
     # create dataset according to the plot type (tco3_zm, vmro3_zm, etc)
     data = o3plots.Dataset(plot_type, **kwargs)
     ds = data.get_dataset(model)
       
     info_dict = ds.to_dict(data=False)
-    info_dict['model'] = model
+    info_dict[MODEL] = model
 
     logger.debug(F"{model} model info: {info_dict}")
     return info_dict
@@ -209,92 +232,65 @@ def plot(*args, **kwargs):
     :param kwargs: The provided in the API call parameters
     :return: Either PDF plot or JSON document
     """
-    plot_type = kwargs['type']
-    models = kwargs['models']
+    plot_type = kwargs[PTYPE]
+    models = phlp.clean_models(**kwargs)
     time_start = time.time()
 
     logger.debug(F"headers: {dict(request.headers)}")
     logger.info(F"kwargs: {kwargs}")
 
-    def __get_curve(data, model, plot_type):
-        """Function to get curve for the model
-        
-        :param data: pointer to how process data
-        :param model: model to process
-        :return: curve
-        :rtype: pandas Series
-        """
+    # set how to process data (tco3_zm, vmro3_zm, etc)
+    data = o3plots.set_data_processing(plot_type, **kwargs)
+    __get_raw_data = data.get_raw_data
+    __get_plot_data = data.get_plot_data
+    __get_ref1980 = data.get_ref1980
 
-        time_model = time.time()
-        # strip possible spaces in front and back
-        model = model.lstrip().rstrip()
-        logger.debug(F"model = {model}")
-
-        # get data for the plot
-        data_processed = __get_plot_data(model)
- 
-        # convert to pandas series to keep date information
-        if (type(data_processed.indexes['time']) is 
-            pd.core.indexes.datetimes.DatetimeIndex) :
-            time_axis = data_processed.indexes['time'].values
-        else:
-            time_axis = data_processed.indexes['time'].to_datetimeindex()
-
-        curve = pd.Series(np.nan_to_num(data_processed[plot_type]), 
-                          index=pd.DatetimeIndex(time_axis),
-                          name=model )
-
-        time_described = time.time()
-        logger.debug("[TIME] One model processed: {}".format(time_described - 
-                                                             time_model))                          
-        return curve
-
-   
-    def __return_json(data, model, plot_type):
+    @_timeit
+    def __return_json(model):
         """Function to return JSON
-        """
 
-        curve = __get_curve(data, model, plot_type)
-        observed = {"model": model,
+        :param model: model to process
+        :return: JSON with points (x,y)
+        """
+        curve = __get_raw_data(model)
+        observed = { MODEL: model,
                     "x": curve.index.tolist(),
                     "y": curve.values.tolist(),
                    }
         return observed
-        
 
-    def __return_pdf(data, model, plot_type):
-        """Function to return PDF plot
+    @_timeit
+    def __return_plot(model):
+        """Function to draw the plot
+
+        :param model: model to process
         """
-        curve = __get_curve(data, model, plot_type)
+        curve = __get_plot_data(model)
         curve.plot()
-        time_axis = curve.index
-        periodicity = phlp.get_periodicity(time_axis)
-        logger.info("Data periodicity: {} points/year".format(periodicity))
-        decompose = seasonal_decompose(curve, period=periodicity)
-        trend = pd.Series(decompose.trend, 
-                          index=time_axis,
-                          name=model+" (trend)" )
-        trend.plot()        
-        
-
-    # set how to process data (tco3_zm, vmro3_zm, etc)
-    data = o3plots.set_data_processing(plot_type, **kwargs)
-    __get_plot_data = data.get_plot_data
-    json_output = []
-    __json_append = json_output.append
 
     if request.headers['Accept'] == "application/pdf":
-        fig = plt.figure(num=None, figsize=(pconf[plot_type]['fig_size']), 
+        figure_file = phlp.set_filename(**kwargs) + ".pdf"
+        fig = plt.figure(num=None, figsize=(plot_c[plot_type]['fig_size']), 
                          dpi=150, facecolor='w',
                          edgecolor='k')
-                         
-        [ __return_pdf(data, m, plot_type) for m in models ]
 
-        figure_file = phlp.set_filename(**kwargs) + ".pdf"
-        plt.title(phlp.set_plot_title(**kwargs))
-        plt.legend()
+        [ __return_plot(m) for m in models ]
+
+        #phlp.set_figure_attr(fig, **kwargs)
+
+        values1980 = [ __get_ref1980(m) for m in models ]
+        ref1980 = np.nanmean(values1980)
+        xmin, xmax = plt.xlim()
+        plt.hlines(ref1980, xmin, xmax, 
+                   colors='k', # 'dimgray'..? 
+                   linestyles='dashed',
+                   zorder=256) # big zorder for above all 
+        logger.debug(F"ref1980 values: {values1980} and the mean: {ref1980}")
+
+        phlp.set_figure_attr(fig, **kwargs)
+
         buffer_plot = BytesIO()  # store in IO buffer, not a file
-        plt.savefig(buffer_plot, format='pdf')
+        plt.savefig(buffer_plot, format='pdf', bbox_inches='tight')
         plt.close(fig)
         buffer_plot.seek(0)
 
@@ -303,16 +299,17 @@ def plot(*args, **kwargs):
                              attachment_filename=figure_file,
                              mimetype='application/pdf')
     else:
+        json_output = []
+        __json_append = json_output.append
 
-        fig_type = {"plot_type": plot_type}
+        fig_type = { PTYPE: plot_type}
         __json_append(fig_type)
     
-        [ __json_append(__return_json(data, m, plot_type)) for m in models ]
+        [ __json_append(__return_json(m)) for m in models ]
         
         response = json_output
 
     logger.info(
        "[TIME] Total time from getting the request: {}".format(time.time() -
                                                                time_start))
-    
     return response

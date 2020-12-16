@@ -17,7 +17,7 @@ spec:
       #  node-role.kubernetes.io/master: ''
       containers:
       - name: o3api-test
-        image: synergyimk/o3api:test
+        image: o3as/o3api:test
         imagePullPolicy: Always
         resources:
           requests:

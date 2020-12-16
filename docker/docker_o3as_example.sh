@@ -8,7 +8,7 @@
 # @author: vykozlov
 #
 
-DOCKER_IMAGE=synergyimk/o3api
+DOCKER_IMAGE=o3as/o3api
 DOCKER_CONTAINER="o3api"
 
 # Directories at your host for the raw data and outputs

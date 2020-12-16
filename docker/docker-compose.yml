@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   o3api:
-    image: synergyimk/o3api
+    image: o3as/o3api
     build:
       context: .
       args:
