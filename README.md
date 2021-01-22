@@ -5,7 +5,8 @@ This code is distributed under the GNU LGPLv3 License. Please, see the LICENSE f
 @authors: Valentin Kozlov, Borja Esteban, Tobias Kerzenmacher (KIT)
 
 # REST API for the O3as service
-[![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3api%2Fmaster)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3api/job/master/) [![Documentation Status](https://readthedocs.org/projects/o3as/badge/?version=latest)](https://o3as.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3api%2Fmaster)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3api/job/master/)
+[![Documentation Status](https://readthedocs.org/projects/o3as/badge/?version=latest)](https://o3as.readthedocs.io/en/latest/?badge=latest)
 
 O3as is a service for Ozone (O3) Assessment, http://o3as.data.kit.edu/
 
@@ -23,7 +24,7 @@ docker run \
     -v /path/to/data:/srv/o3api/data:ro \
     o3as/o3api:{tag} \
 ```
-where `tag = latest`
+where `tag = latest` (or `test`).
 
 
 ## Using docker compose

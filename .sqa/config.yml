@@ -3,8 +3,15 @@ config:
     o3api:
       repo: 'https://git.scc.kit.edu/synergy.o3as/o3api.git'
       branch: master
-      dockerhub: o3as/o3api
-      dockertag: latest
+  credentials:
+    - id: o3as-dockerhub-vk
+      username_var: JPL_DOCKERUSER
+      password_var: JPL_DOCKERPASS
+environment:
+#  JPL_DOCKERSERVER: "hub.docker.com"
+  JPL_DOCKERPUSH: "o3api"
+  JPL_DOCKERFORCEBUILD: "True"
+#  LANG: C.UTF-8
 
 sqa_criteria:
   qc_style:
@@ -32,8 +39,5 @@ sqa_criteria:
           tox_file: /o3api-testing/tox.ini
           testenv:
             - bandit
-
-#environment:
-#  LANG: C.UTF-8
 
 timeout: 900
