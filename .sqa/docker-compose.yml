@@ -14,4 +14,4 @@ services:
      build:
         context: "."
         dockerfile: "./o3api/docker/Dockerfile"
-     image: "o3as/o3api:test"
+     image: "o3as/o3api:latest"
