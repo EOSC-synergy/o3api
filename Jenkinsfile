@@ -8,6 +8,14 @@ pipeline {
     agent any
 
     stages {
+        stage('Update config.yml') {
+           steps {
+                script {
+                    // update config.yml for Jenkins_ID
+                    sh "bash .sqa/update-config-yml"
+                }
+           }
+        }
         stage('SQA baseline dynamic stages') {
             steps {
                 script {

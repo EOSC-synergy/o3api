@@ -147,15 +147,15 @@ class TestPackageMethods(unittest.TestCase):
         """
         Test that o3meta is dict
         """
-        o3meta = o3api.get_metadata()
+        o3meta = o3api.get_api_info()
         self.assertTrue(type(o3meta) is dict)
 
 
-    def test_metadata_values(self):
+    def test_api_info_values(self):
         """
         Test that metadata contains right values (subset)
         """
-        o3meta = o3api.get_metadata()
+        o3meta = o3api.get_api_info()
         self.assertEqual(self.meta['name'].replace('-','_'),
                          o3meta['name'].replace('-','_'))
         self.assertEqual(self.meta['summary'].replace('-','_'),
@@ -173,10 +173,13 @@ class TestPackageMethods(unittest.TestCase):
         """
         Test that self.meta is dict
         """
-        o3list = o3api.list_models()
-        self.assertTrue(type(o3list) is dict)
+        kwargs = {}
+        kwargs[PTYPE] = TCO3
+        kwargs['select'] = 'all'
+        o3list = o3api.list_models(**kwargs)
+        self.assertTrue(type(o3list) is list)
 
-    def test_get_model_info_type(self):
+    def test_get_models_info_type(self):
         """
         Test that model_info is dict
         """
@@ -184,9 +187,10 @@ class TestPackageMethods(unittest.TestCase):
             MODEL: self.kwargs[MODEL][0],
             PTYPE: self.kwargs[PTYPE]
         }
-        o3model_info = o3api.get_model_info(**o3kwargs)
-        print(F"O3 model: {o3model_info}")
-        self.assertTrue(type(o3model_info) is dict)
+        o3models_info = o3api.get_models_info(**o3kwargs)
+        print(F"O3 model: {o3models_info}")
+        self.assertTrue(type(o3models_info) is list)
+        self.assertTrue(type(o3models_info[0]) is dict)
 
     def test_get_dataset_values(self):
         """
