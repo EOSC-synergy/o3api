@@ -1,9 +1,10 @@
-version: "3.6"
+version: "3.7"
 
 services:
   o3api-testing:
     image: "indigodatacloud/ci-images:python3.6"
     container_name: "o3api-testing"
+    hostname: "o3api-testing"
     volumes:
      - type: bind
        source: ./o3api
@@ -13,4 +14,4 @@ services:
      build:
         context: "."
         dockerfile: "./o3api/docker/Dockerfile"
-     image: "o3as/o3api:latest"
+     image: "o3as/o3api:test"

@@ -49,38 +49,48 @@ class TestAPIMethods(unittest.TestCase):
                         'Accept': 'application/json'}
         cfg.O3AS_DATA_BASEPATH = "tmp/data"
         
-    def test_api_get_metadata(self):
-        meta = self.client.post('/api/get_metadata')
+    def test_api_info(self):
+        meta = self.client.get('/api/api-info')
         print(F"[API] meta = {meta.data}")
         print(F"[API] type(meta.data) = {type(meta.data)}")
         self.assertEqual(200, meta.status_code)
         #self.assertTrue(type(meta.data) is dict)
 
-    def test_api_model_info(self):
-        request_j = { PTYPE: TCO3, MODEL: 'o3api-test' }
-        request_q = ''.join([key + "=" + val + "&" for key,val in request_j.items() ])
+    def test_api_models(self):
+        models = self.client.get('/api/models')
+        print(F"[API] models = {models.data}")
+        print(F"[API] type(models.data) = {type(models.data)}")
+        self.assertEqual(200, models.status_code)
+        
+    def test_api_models_list(self):
+        request_j = { 'select': '' }
+        request_q = ''.join([key + "=" + val + "&" for key,val in request_j.items()])
         request_q = request_q[:-1] + ''
-        # WHY json=json.dumps(request_j) does NOT work?!?!?!
-        m_info = self.client.post('/api/get_model_info',
+        api_method = os.path.join('/api/models/list', 'all')
+        models = self.client.post(api_method,
                                   headers=self.headers,
                                   query_string=request_q
                                   )
+        print(F"[API] models (list) = {models.data}")
+        self.assertEqual(200, models.status_code)
+
+    def test_api_model_info(self):
+        request_j = { MODEL: 'o3api-test' }
+        m_info = self.client.get('/api/models/o3api-test',
+                                  headers=self.headers
+                                )
         print(F"[API] m_info.data: {m_info.data}")
         print(F"[API] m_info.content_type: {m_info.content_type}")
         self.assertEqual(200, m_info.status_code)
 
-    def test_api_list_models(self):
-        models = self.client.post('/api/list_models')
-        print(F"[API] models = {models.data}")
-        print(F"[API] type(models.data) = {type(models.data)}")
+    def test_api_plotss(self):
+        models = self.client.get('/api/plots')
         self.assertEqual(200, models.status_code)
 
-    def test_api_plot(self):
-        
+    def test_api_plots_tco3_zm(self):     
         end_year = np.datetime64('today', 'Y').astype(int) + 1970
         begin_year = end_year - 2
-        request_j = { PTYPE: TCO3, 
-                      MODEL: 'o3api-test', 
+        request_j = { MODEL: 'o3api-test', 
                       BEGIN: str(begin_year), 
                       END:   str(end_year),
                       LAT_MIN: '-10',
@@ -90,11 +100,11 @@ class TestAPIMethods(unittest.TestCase):
         request_q = request_q[:-1] + ''
         print(F"[API], plot: {request_q}")
         # WHY json=json.dumps(request_j) does NOT work?!?!?!
-        plot = self.client.post('/api/plot',
-                                  headers=self.headers,
-                                  #json=json.dumps(request_j)
-                                  query_string=request_q
-                                  )
+        plot = self.client.post('/api/plots/tco3_zm',
+                                headers=self.headers,
+                                #json=json.dumps(request_j)
+                                query_string=request_q
+                               )
         print(F"[API] plot.data: {plot.data}")
         print(F"[API] plot.content_type: {plot.content_type}")
         self.assertEqual(200, plot.status_code)

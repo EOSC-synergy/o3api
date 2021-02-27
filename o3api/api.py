@@ -38,7 +38,9 @@ import numpy as np
 import os
 import pkg_resources
 import pandas as pd
+import re
 import time
+import yaml
 
 import cProfile
 import io
@@ -70,6 +72,10 @@ END = cfg.api_conf['end']
 MONTH = cfg.api_conf['month']
 LAT_MIN = cfg.api_conf['lat_min']
 LAT_MAX = cfg.api_conf['lat_max']
+
+TCO3 = cfg.netCDF_conf['tco3']
+VMRO3 = cfg.netCDF_conf['vmro3']
+TCO3Return = cfg.netCDF_conf['tco3_r']
 
 # configuration for plotting
 plot_c = cfg.plot_conf
@@ -149,7 +155,7 @@ def _timeit(func):
     return wrap
 
 @_catch_error
-def get_metadata(*args, **kwargs):
+def get_api_info(*args, **kwargs):
     """Return information about the package
 
     :return: The o3api package info
@@ -177,54 +183,170 @@ def get_metadata(*args, **kwargs):
                     meta[par] = value
         iline += 1
     
-    logger.debug(F"Found metadata: {meta}")    
+    logger.debug(F"Found metadata: {meta}")
     return meta
+
+@_catch_error
+def get_models_info(*args, **kwargs):
+    """Return dictionary of available models with the meta info
+    
+    :return: The dictionary of available models
+    :rtype: dict
+    """
+    models = []
+    plot_types = get_plots()
+
+    colors = ["black", "gray", "red", "chocolate",
+              "orange", "gold", "olive", "green",
+              "lime", "lightseagreen", "teal", "deepskyblue",
+              "navy", "blue", "purple", "magenta"]
+    line_styles = ["solid", "dotted", "dashed", "dashdot"]
+    markers = [".", "o", "+", "x", "v", "^", "s", "*", "D"]
+
+    m_counter = 0
+    for mdir in os.listdir(cfg.O3AS_DATA_BASEPATH):
+        m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, mdir)
+        m_files = os.listdir(m_path)
+        if (os.path.isdir(m_path)) and any(".nc" in f for f in m_files):
+            meta = { 'model' : mdir,
+                     'info': None,
+                     'url': None,
+                     TCO3: {
+                          "isdata": False,
+                          "plot": {
+                              'color': "black",
+                              'style': "solid"
+                              }
+                          },
+                     TCO3Return: {
+                          "isdata": False,
+                          "plot": {
+                              'color': "black",
+                              'style': "solid"
+                              }
+                          },
+                     VMRO3: {
+                          "isdata": False,
+                          "plot": {
+                              'color': "black",
+                              'style': "solid"
+                              }
+                          },
+                   }
+            if "metadata.yaml" in m_files:
+                # update meta from metadata.yaml, if available:
+                with open(os.path.join(m_path, "metadata.yaml"), "r") as stream:
+                    meta_yaml = yaml.safe_load(stream)
+                meta.update(meta_yaml)
+            else:
+                for pt in plot_types:
+                    i_color = m_counter % len(colors)
+                    meta[pt]["plot"]["color"] = colors[i_color]
+                    i_style = m_counter % len(line_styles)
+                    meta[pt]["plot"]["style"] = line_styles[i_style]
+            for f in os.listdir(m_path):
+                if "tco3" in f:
+                    meta[TCO3]['isdata'] = True
+                    meta[TCO3Return]['isdata'] = True
+                if "vmro3" in f:
+                    meta[VMRO3]['isdata'] = True
+            models.append(meta)
+            m_counter += 1
+
+    return models
 
 @_catch_error
 def list_models(*args, **kwargs):
     """Return the list of available Ozone models
 
     :return: The list of available models
-    :rtype: dict
+    :rtype: list
     """
-    models = []
-    for mdir in os.listdir(cfg.O3AS_DATA_BASEPATH):
-        m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, mdir)
-        if (os.path.isdir(m_path)):
-            netcdf_ok = False
-            for f in os.listdir(m_path):
-                if ".nc" in f:
-                    netcdf_ok = True
-            models.append(mdir) if netcdf_ok else ''
-    
-    models.sort()
-    models_dict = { "models": models }
-    logger.debug(F"Model list: {models_dict}")
+    models_list = []
+    ptype = kwargs[PTYPE]
 
-    return models_dict
+    models = get_models_info()
+    if ptype != "all":
+        for m in models:
+            if m[ptype]['isdata']:
+                models_list.append(m['model'])
+    else:
+        models_list = [ m['model'] for m in models ]
+
+    if 'select' in kwargs:
+        pattern = kwargs['select'].lower()
+        models_list = [ m for m in models_list if pattern in m.lower() ]
+
+    models_list.sort()
+    return models_list
 
 @_catch_error
-def get_model_info(*args, **kwargs):
+def get_model_detail(*args, **kwargs):
     """Return information about the Ozone model
 
     :return: Info about the Ozone model
     :rtype: dict
     """
-    plot_type = kwargs[PTYPE]
     model = kwargs[MODEL].lstrip().rstrip()
+    models = get_models_info()
+    for m in models:
+        if m['model'] == model:
+            model_info_dict = m
 
-    # create dataset according to the plot type (tco3_zm, vmro3_zm, etc)
-    data = o3plots.Dataset(plot_type, **kwargs)
-    ds = data.get_dataset(model)
-      
-    info_dict = ds.to_dict(data=False)
-    info_dict[MODEL] = model
+    plot_types = get_plots()
+    for pt in plot_types:
+        print("model_info_dict:", model_info_dict, pt)
+        if model_info_dict[pt]['isdata']:
+            # create dataset according to the plot type (tco3_zm, vmro3_zm, etc)
+            data = o3plots.Dataset(pt, **kwargs)
+            ds = data.get_dataset(model)
+            model_info_dict[pt]['data'] = ds.to_dict(data=False)
 
-    logger.debug(F"{model} model info: {info_dict}")
-    return info_dict
+    logger.debug(F"{model} model info: {model_info_dict}")
+    return model_info_dict
+
+def get_plots(*args, **kwargs):
+    """Get list of available plot methods"""
+    plots = [ TCO3, VMRO3, TCO3Return ]
+
+    return plots
+
+def tco3_zm(*args, **kwargs):
+    """Plot tco3_zm
+
+    :param kwargs: The provided in the API call parameters
+    :return: Either PDF plot or JSON document
+    """
+    kwargs[PTYPE] = "tco3_zm"
+    response = plot(*args, **kwargs)
+
+    return response
+
+def vmro3_zm(*args, **kwargs):
+    """Plot vmro3_zm
+
+    :param kwargs: The provided in the API call parameters
+    :return: Either PDF plot or JSON document
+    """
+    kwargs[PTYPE] = "vmro3_zm"
+    response = plot(*args, **kwargs)
+
+    return response
+
+
+def tco3_return(*args, **kwargs):
+    """Plot tco3_return
+
+    :param kwargs: The provided in the API call parameters
+    :return: Either PDF plot or JSON document
+    """
+    kwargs[PTYPE] = "tco3_return"
+    response = plot(*args, **kwargs)
+
+    return response
 
 #@_profile
-@flaat.login_required() # Require only authorized people to call api method   
+@flaat.login_required() # Require only authorized people to call the function   
 @_catch_error
 def plot(*args, **kwargs):
     """Main plotting routine
@@ -233,7 +355,8 @@ def plot(*args, **kwargs):
     :return: Either PDF plot or JSON document
     """
     plot_type = kwargs[PTYPE]
-    models = phlp.clean_models(**kwargs)
+    models = phlp.cleanse_models(**kwargs)
+    models_info = get_models_info()
     time_start = time.time()
 
     logger.debug(F"headers: {dict(request.headers)}")
@@ -265,8 +388,16 @@ def plot(*args, **kwargs):
 
         :param model: model to process
         """
+        m_info = {}
+        for m in models_info:
+            if m['model'] == model:
+                m_info = m
+        print("m_info: ", m_info)
+        m_color = m_info[plot_type]["plot"]["color"]
+        m_style = m_info[plot_type]["plot"]["style"]
+
         curve = __get_plot_data(model)
-        curve.plot()
+        curve.plot(color=m_color, linestyle=m_style)
 
     if request.headers['Accept'] == "application/pdf":
         figure_file = phlp.set_filename(**kwargs) + ".pdf"
@@ -302,9 +433,6 @@ def plot(*args, **kwargs):
         json_output = []
         __json_append = json_output.append
 
-        fig_type = { PTYPE: plot_type}
-        __json_append(fig_type)
-    
         [ __json_append(__return_json(m)) for m in models ]
         
         response = json_output

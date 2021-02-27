@@ -32,11 +32,11 @@ LAT_MAX = cfg.api_conf['lat_max']
 # configuration for plotting
 plot_c = cfg.plot_conf
 
-def clean_models(**kwargs):
-    """Clean models from empty entries, spaces, and quotes
+def cleanse_models(**kwargs):
+    """Cleansing models from empty entries, spaces, and quotes
 
     :param kwargs: The provided in the API call parameters
-    :return: models cleaned from empty entries, spaces, quotes
+    :return: models cleansed from empty entries, spaces, quotes
     :rtype: list
     """
 
@@ -130,7 +130,7 @@ def set_figure_attr(fig, **kwargs):
     :return: none
     """
     plot_type = kwargs[PTYPE]
-    models = clean_models(**kwargs)
+    models = cleanse_models(**kwargs)
 
     plt.xlabel(plot_c[plot_type]['xlabel'], fontsize='large')
     plt.ylabel(plot_c[plot_type]['ylabel'], fontsize='large')
