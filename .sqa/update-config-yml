@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+#
+# Script to replace JenkinsID according to GitCommitter
+#
+
+# GIT COMMITTER
+GitCommitter=$(git log -n 1 --pretty=format:'%an')
+echo $GitCommitter
+
+# default JenkinsID
+JenkinsID="o3as-dockerhub-boressan"
+# if GIT COMMITTER is different, re-define JenkinsID
+[[ ${GitCommitter} = *"kozlov" ]] && JenkinsID="o3as-dockerhub-vykozlov"
+
+export JenkinsID=$JenkinsID
+
+GIT_DIR=$(git rev-parse --git-dir)
+SQA_DIR=$(cd ${GIT_DIR}; cd ../.sqa; pwd -P)
+
+# one may replace BRANCH. Not suitable for merges
+#GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+#sed -i "s/branch:.*/branch: ${GIT_BRANCH}/" "${SQA_DIR}/config.yml"
+
+# replace JenkinsID in config.yml accordingly
+sed -i "s/- id.*/- id: ${JenkinsID}/" "${SQA_DIR}/config.yml"
+
+cat "${SQA_DIR}/config.yml"
+

@@ -45,11 +45,11 @@ trusted_OP_list = [
 netCDF_conf = {
     'tco3'  : 'tco3_zm',
     'vmro3' : 'vmro3_zm',
-    'tco3_r': 'tco_return',
+    'tco3_r': 'tco3_return',
     't_c'   : 'time',
     'lat_c' : 'lat'}
 
-# REST API parameters. See also swagger.yml (!)
+# REST API parameters. See also swagger.yml (!) # TO CHANGE!
 api_conf = {
     'plot_t' : 'ptype',
     'model'  : 'model',

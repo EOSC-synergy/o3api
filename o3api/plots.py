@@ -81,6 +81,9 @@ class Dataset:
         """
         self.plot_type = plot_type
         self._data_pattern = self.plot_type + "*.nc"
+        # tco3_return uses the same data as tco3_zm :
+        if plot_type == "tco3_return":
+            self._data_pattern = "tco3*.nc"
         self._datafiles = [] #None
 
     def __set_datafiles(self, model):
@@ -175,7 +178,7 @@ class DataSelection(Dataset):
         :rtype: xarray
         """
         ds = super().get_dataset(model)
-        logger.info("Dataset is loaded from storage location: {}".format(ds))
+        logger.info(F"{model}: Dataset is loaded from storage location: {ds}")
         
         # check in what order latitude is used, return them correspondently
         lat_a, lat_b = self.__check_latitude_order(ds)
