@@ -10,6 +10,7 @@ config:
 
 environment:
   JPL_DOCKERPUSH: "o3api"
+  JPL_DOCKERFORCEBUILD: "True"
   LANG: C.UTF-8
 
 sqa_criteria:
