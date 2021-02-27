@@ -2,7 +2,7 @@ config:
   project_repos:
     o3api:
       repo: 'https://git.scc.kit.edu/synergy.o3as/o3api.git'
-      branch: test
+      branch: master
   credentials:
     - id: o3as-dockerhub-vykozlov
       username_var: JPL_DOCKERUSER
