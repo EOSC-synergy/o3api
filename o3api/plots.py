@@ -198,22 +198,6 @@ class DataSelection(Dataset):
                           lat=slice(lat_a,
                                     lat_b))  # latitude
         return ds_slice
-        
-    def get_1980slice(self, model):
-        """Function to select the slice for 1980 (reference year) 
- 
-        :param model: The model to process
-        :return: xarray dataset selected according to the time and latitude
-        :rtype: xarray
-        """
-        ds = super().get_dataset(model)
-        # check in what order latitude is used, return them correspondently
-        lat_a, lat_b = self.__check_latitude_order(ds)
-        if len(self.month) > 0:
-            ds = ds.sel(time=ds.time.dt.month.isin(self.month))        
-        ds_1980 = ds.sel(time=slice("1980-01", "1980-12"), 
-                         lat=slice(lat_a, lat_b))  # latitude
-        return ds_1980
 
 
     def to_pd_series(self, ds, model):

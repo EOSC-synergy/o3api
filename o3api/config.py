@@ -15,9 +15,6 @@ log_level = logging.INFO # DEBUG # WARNING
 # identify basedir for the package
 O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
 
-# identify basedir for the package
-O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
-
 # Base path for data
 # Default is /srv/o3api/data/
 # But one can change using environment $O3AS_DATA_BASEPATH
