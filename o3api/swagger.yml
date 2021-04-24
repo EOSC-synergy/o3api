@@ -1,12 +1,60 @@
 swagger: "2.0"
 info:
   description: This is the swagger file that goes with our server code
-  version: "1.0.0"
+  version: "0.5.0"
   title: Swagger REST API for O3as
 consumes:
   - "application/json"
 
 basePath: "/api"
+
+parameters:
+  ModelParam:
+    in: query
+    name: model
+    type: array
+    items:
+      type: string
+    description: Name(s) of model(s) (dataset-model)
+    default: [CCMI-1_ACCESS_ACCESS-CCM-refC2,CCMI-1_CCCma_CMAM-refC2,CCMI-1_CHASER-MIROC-ESM-refC2]
+    required: true
+  YearBeginParam:
+    name: begin
+    in: query
+    type: integer
+    description: Year to start data scanning from
+    default: 1959
+    required: false
+  YearEndParam:
+    name: end
+    in: query
+    type: integer
+    description: Year to finish data scanning
+    default: 2100
+    required: false
+  MonthParam:
+    name: month
+    in: query
+    type: array
+    items:
+      type: integer
+    description: Month(s) to select, if not a whole year
+    default: []
+    required: false
+  LatMinParam:
+    name: lat_min
+    in: query
+    type: integer
+    description: Latitude (min) to define the range (-90..90)
+    default: -90
+    required: false
+  LatMaxParam:
+    name: lat_max
+    in: query
+    type: integer
+    description: Latitude (max) to define the range (-90..90)
+    default: 90
+    required: false  
 
 # Paths supported by the server application
 paths:
@@ -24,6 +72,76 @@ paths:
           description: "Successfully returned o3api info"
           schema:
             $ref: '#/definitions/MetaInfo'
+  /data:
+    get:
+      operationId: "o3api.api.get_data_types"
+      tags:
+        - "data"
+      summary: "Returning list of plot types with available data"
+      description: "Return list of plot types with available data"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Successfully returned list of data types"
+          schema:
+            $ref: '#/definitions/ListData'
+  /data/tco3_zm:
+    post:
+      operationId: "o3api.api.get_data_tco3_zm"
+      tags:
+        - "data"
+      summary: "Get raw data for tco3_zm"
+      description: "Get raw data for tco3_zm"
+      produces:
+        - "application/json"
+      parameters:
+        - $ref: '#/parameters/ModelParam'
+        - $ref: '#/parameters/YearBeginParam'
+        - $ref: '#/parameters/YearEndParam'
+        - $ref: '#/parameters/MonthParam'
+        - $ref: '#/parameters/LatMinParam'
+        - $ref: '#/parameters/LatMaxParam'
+      responses:
+        200:
+          description: "Successfully retrieved the data"
+          schema:
+            type: file
+          schema:
+            $ref: '#/definitions/TCO3Data'
+#        default:
+#          description: "Unexpected error"
+#          schema:
+#            $ref: "#/definitions/Error"
+### comment /data/tco3_return for now, until we decide on params # vkoz@210424
+#  /data/tco3_return:
+#    post:
+#      operationId: "o3api.api.get_data_tco3_return"
+#      tags:
+#        - "data"
+#      summary: "Get raw data for tco3_return"
+#      description: "Get raw data for tco3_return"
+#      produces:
+#        - "application/json"
+#      parameters:
+#        - $ref: '#/parameters/ModelParam'
+#        - $ref: '#/parameters/YearBeginParam'
+#        - $ref: '#/parameters/YearEndParam'
+#        - $ref: '#/parameters/MonthParam'
+#        - $ref: '#/parameters/LatMinParam'
+#        - $ref: '#/parameters/LatMaxParam'
+#      responses:
+#        200:
+#          description: "Successfully retrieved the data"
+#          schema:
+#            type: file
+#          schema:
+#            $ref: '#/definitions/TCO3ReturnData'
+##        default:
+##          description: "Unexpected error"
+##          schema:
+##            $ref: "#/definitions/Error"
+###
   /models:
     get:
       operationId: "o3api.api.get_models_info"
@@ -35,7 +153,7 @@ paths:
         - "application/json"
       responses:
         200:
-          description: "Successfully returned list of models"
+          description: "Successfully returned list of models + short info"
           schema:
             $ref: '#/definitions/Models'
   /models/list/{ptype}:
@@ -78,7 +196,7 @@ paths:
           in: path
           type: string
           description: model name
-          default: CCMI-1_ACCESS-refC2
+          default: CCMI-1_ACCESS_ACCESS-CCM-refC2
           required: true
       responses:
         200:
@@ -87,7 +205,7 @@ paths:
             $ref: '#/definitions/ModelInfo'
   /plots:
     get:
-      operationId: "o3api.api.get_plots"
+      operationId: "o3api.api.get_plot_types"
       tags:
         - "plots"
       summary: "Get the list of possible plots"
@@ -101,7 +219,7 @@ paths:
             $ref: '#/definitions/ListPlots'
   /plots/tco3_zm:
     post:
-      operationId: "o3api.api.tco3_zm"
+      operationId: "o3api.api.plot_tco3_zm"
       tags:
         - "plots"
       summary: "Create tco3_zm plot"
@@ -110,46 +228,12 @@ paths:
         - "application/pdf"
         - "application/json"
       parameters:
-        - name: model
-          in: query
-          type: array
-          items:
-            type: string
-          description: Name(s) of model(s) (dataset-model)
-          default: [CCMI-1_ACCESS-refC2,CCMI-1_CCCma-CMAM-refC2,CCMI-1_CHASER-MIROC-ESM-refC2]
-          required: true
-        - name: begin
-          in: query
-          type: integer
-          description: Year to start data scanning from
-          default: 1959
-          required: false
-        - name: end
-          in: query
-          type: integer
-          description: Year to finish data scanning
-          default: 2100
-          required: false
-        - name: month
-          in: query
-          type: array
-          items:
-            type: integer
-          description: Month(s) to select, if not a whole year
-          default: []
-          required: false
-        - name: lat_min
-          in: query
-          type: integer
-          description: Latitude (min) to define the range (-90..90)
-          default: -10
-          required: false
-        - name: lat_max
-          in: query
-          type: integer
-          description: Latitude (max) to define the range (-90..90)
-          default: 10
-          required: false
+        - $ref: '#/parameters/ModelParam'
+        - $ref: '#/parameters/YearBeginParam'
+        - $ref: '#/parameters/YearEndParam'
+        - $ref: '#/parameters/MonthParam'
+        - $ref: '#/parameters/LatMinParam'
+        - $ref: '#/parameters/LatMaxParam'
       responses:
         200:
           description: "Successfully created a plot"
@@ -161,47 +245,9 @@ paths:
 #          description: "Unexpected error"
 #          schema:
 #            $ref: "#/definitions/Error"
-  /plots/vmro3_zm:
-    post:
-      operationId: "o3api.api.vmro3_zm"
-      tags:
-        - "plots"
-      summary: "Create vmro3_zm plot"
-      description: "Create vmro3_zm plot"
-      produces:
-        - "application/pdf"
-        - "application/json"
-      parameters:
-        - name: model
-          in: query
-          type: array
-          items:
-            type: string
-          description: Name(s) of model(s) (dataset-model)
-          default: [CCMI-1_ACCESS-refC2,CCMI-1_CCCma-CMAM-refC2,CCMI-1_CHASER-MIROC-ESM-refC2]
-          required: true
-        - name: begin
-          in: query
-          type: integer
-          description: Year to start data scanning from
-          default: 1959
-          required: false
-        - name: end
-          in: query
-          type: integer
-          description: Year to finish data scanning
-          default: 2100
-          required: false
-      responses:
-        200:
-          description: "Successfully created a plot"
-          schema:
-            type: file
-          schema:
-            $ref: '#/definitions/VMRO3Data'
   /plots/tco3_return:
     post:
-      operationId: "o3api.api.tco3_return"
+      operationId: "o3api.api.plot_tco3_return"
       tags:
         - "plots"
       summary: "Create tco3_return plot"
@@ -210,26 +256,21 @@ paths:
         - "application/pdf"
         - "application/json"
       parameters:
-        - name: model
+        - $ref: '#/parameters/ModelParam'
+        - $ref: '#/parameters/LatMinParam'
+        - $ref: '#/parameters/LatMaxParam'
+        - name: ref_meas
           in: query
-          type: array
-          items:
-            type: string
-          description: Name(s) of model(s) (dataset-model)
-          default: [CCMI-1_ACCESS-refC2,CCMI-1_CCCma-CMAM-refC2,CCMI-1_CHASER-MIROC-ESM-refC2]
+          type: string
+          description: Reference observational measurument
+          default: SBUV_GSFC_merged-SAT-ozone
           required: true
-        - name: begin
+        - name: ref_year
           in: query
           type: integer
-          description: Year to start data scanning from
-          default: 1959
-          required: false
-        - name: end
-          in: query
-          type: integer
-          description: Year to finish data scanning
-          default: 2100
-          required: false
+          description: Reference year for the obsevational measurement
+          default: 1980
+          required: true
       responses:
         200:
           description: "Successfully created a plot"
@@ -237,6 +278,29 @@ paths:
             type: file
           schema:
             $ref: '#/definitions/TCO3ReturnData'
+### comment /plots/vmro3_zm until we now how to produce plots # vkoz@210424
+#  /plots/vmro3_zm:
+#    post:
+#      operationId: "o3api.api.vmro3_zm"
+#      tags:
+#        - "plots"
+#      summary: "Create vmro3_zm plot"
+#      description: "Create vmro3_zm plot"
+#      produces:
+#        - "application/pdf"
+#        - "application/json"
+#      parameters:
+#        - $ref: '#/parameters/ModelParam'
+#        - $ref: '#/parameters/YearBeginParam'
+#        - $ref: '#/parameters/YearEndParam'
+#      responses:
+#        200:
+#          description: "Successfully created a plot"
+#          schema:
+#            type: file
+#          schema:
+#            $ref: '#/definitions/VMRO3Data'
+###
 definitions:
   MetaInfo:
     type: object
@@ -255,15 +319,15 @@ definitions:
         type: string
       version:
         type: string
+  ListData:
+    type: array
+    items:
+      type: string
   Models:
     type: array
     items:        
       properties:
-        info:
-          type: string
         model:
-          type: string
-        url:
           type: string
         tco3_zm:
           type: object
@@ -278,11 +342,7 @@ definitions:
   ModelInfo:
     type: object
     properties:
-      info:
-        type: string
       model:
-        type: string
-      url:
         type: string
       tco3_zm:
         type: object
@@ -291,12 +351,9 @@ definitions:
       vmro3_zm:
         type: object
   ListPlots:
-    type: object
-    properties:
-      plots:
-        type: array
-        items:
-          type: string
+    type: array
+    items:
+      type: string
   TCO3Data:
     type: array
     items:        

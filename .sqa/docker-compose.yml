@@ -14,4 +14,6 @@ services:
      build:
         context: "."
         dockerfile: "./o3api/docker/Dockerfile"
-     image: "o3as/o3api:latest"
+        args:
+          branch: ${GIT_BRANCH}
+     image: "o3as/o3api:${O3API_DOCKER_TAG}"

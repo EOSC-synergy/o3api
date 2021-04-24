@@ -10,7 +10,10 @@ import logging
 import os
 
 # logging level accross various scripts
-log_level = logging.DEBUG
+log_level = logging.INFO # DEBUG # WARNING
+ 
+# identify basedir for the package
+O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
 
 # identify basedir for the package
 O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
@@ -18,7 +21,13 @@ O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
 # Base path for data
 # Default is /srv/o3api/data/
 # But one can change using environment $O3AS_DATA_BASEPATH
-O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', "/srv/o3api/data/")
+O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', '/srv/o3api/data/')
+
+O3AS_TCO3_REF_MEAS = os.getenv('O3AS_TCO3_REF_MEAS', 'SBUV_GSFC_merged-SAT-ozone')
+O3AS_TCO3_REF_YEAR = os.getenv('O3AS_TCO3_REF_YEAR', 1980)
+O3AS_TCO3Return_BOXCAR_WINDOW = 10
+O3AS_TCO3Return_BEGIN_YEAR=1970
+O3AS_TCO3Return_END_YEAR=2100
 
 # list of trusted OIDC providers
 trusted_OP_list = [
@@ -44,8 +53,8 @@ trusted_OP_list = [
 # netCDF variable names and coodrinates
 netCDF_conf = {
     'tco3'  : 'tco3_zm',
-    'vmro3' : 'vmro3_zm',
     'tco3_r': 'tco3_return',
+    'vmro3' : 'vmro3_zm',
     't_c'   : 'time',
     'lat_c' : 'lat'}
 
@@ -57,16 +66,39 @@ api_conf = {
     'end'    : 'end',
     'month'  : 'month',
     'lat_min': 'lat_min',
-    'lat_max': 'lat_max'
+    'lat_max': 'lat_max',
+    'ref_meas': 'ref_meas',
+    'ref_year': 'ref_year'
 }
 
+tco3_return_regions = {
+    'Antarctic(Oct)': {'lat_min': -90, 'lat_max': -60, 'month': [10]},
+    'SH mid-lat': {'lat_min': -60, 'lat_max': -35, 'month': ''},
+    'Tropics': {'lat_min': -20, 'lat_max': 20, 'month': ''},
+    'NH mid-lat': {'lat_min': 35, 'lat_max': 60, 'month': ''},
+    'Arctic(Mar)': {'lat_min': 60, 'lat_max': 90, 'month': [3]},
+    'Near global': {'lat_min': -60, 'lat_max': 60, 'month': ''},
+    'Global': {'lat_min': -90, 'lat_max': 90, 'month': ''},
+}
 # configuration for plotting
 # ToDo: use file?
 plot_conf = {
     netCDF_conf['tco3']: {
         'fig_size': [9, 6],
         'xlabel': 'Year',
-        'ylabel': 'tco3_zm (DU)' #Total column Ozone, zonal mean (DU)
+        'ylabel': 'Total column Ozone, zonal mean (DU)', #tco3_zm (DU)
+        'plot' : { 'color': 'color', 
+                   'style': 'linestyle',
+                   'linewidth': 'linewidth'}
+        },
+    netCDF_conf['tco3_r']: {
+        'fig_size': [9, 6],
+        'xlabel': 'Region',
+        'ylabel': 'Return year',
+        'plot' : { 'color': 'color', 
+                   'style': 'linestyle',
+                   'linewidth': 'linewidth',
+                   'marker': 'marker'}
         }
 }
 
