@@ -106,7 +106,7 @@ def set_filename(**kwargs):
     :return: file_name with added input parameters (no extension given!)
     :rtype: string
     """
-    print("api_conf = ", cfg.api_conf)
+
     file_name = ''
     for val in cfg.api_conf.values():
         if val == MONTH and len(kwargs[val]) == 0:
@@ -140,14 +140,9 @@ def set_figure_attr(fig, **kwargs):
     num_col = num_col if (len(models) % 12 == 0) else num_col + 1
     ax = plt.gca() # get axis instance
     ax_pos = ax.get_position() # get the axes position
-    # add 'year 1980' line label
-    handles, labels = ax.get_legend_handles_labels()
-    handles.append(Line2D([0], [0], color='k',
-                          linestyle='dashed', 
-                          label='Reference year 1980'))
-    plt.legend(handles=handles,
-               loc='upper center', 
-               bbox_to_anchor=[0., ax_pos.y0-0.675, 0.99, 0.3],
+
+    plt.legend(loc='upper center', 
+               bbox_to_anchor=[0., ax_pos.y0-0.575, 0.99, 0.3],
                ncol=num_col, fancybox=True, fontsize='small',
                borderaxespad=0.)
     fig.text(ax_pos.x0 + ax_pos.width - 0.01,

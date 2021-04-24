@@ -19,11 +19,13 @@ fi
 if [ "${ENABLE_HTTPS}" == "True" ]; then
   if test -e /certs/cert.pem && test -f /certs/key.pem ; then
     exec gunicorn --bind $O3API_LISTEN_IP:$O3API_PORT -w "$O3API_WORKERS" \
-    --certfile /certs/cert.pem --keyfile /certs/key.pem --timeout "$O3API_TIMEOUT"  o3api:app
+    --certfile /certs/cert.pem --keyfile /certs/key.pem \
+    --limit-request-line 8190 --timeout "$O3API_TIMEOUT"  o3api:app
   else
     echo "[ERROR] File /certs/cert.pem or /certs/key.pem NOT FOUND!"
     exit 1
   fi
 else
-  exec gunicorn --bind $O3API_LISTEN_IP:$O3API_PORT -w "$O3API_WORKERS" --timeout "$O3API_TIMEOUT"  o3api:app
+  exec gunicorn --bind $O3API_LISTEN_IP:$O3API_PORT -w "$O3API_WORKERS" \
+  --limit-request-line 8190 --timeout "$O3API_TIMEOUT"  o3api:app
 fi

@@ -2,6 +2,7 @@
 # base - base image (default: ubuntu, optional: debian)
 # tag - tag for base mage (default: 20.04, optional: stable-slim)
 # branch - user repository branch to clone (default: master, other option: test)
+# api_date - dummy arg to force rebuild from a certain step
 #
 # To build the image:
 # $ docker build -t <dockerhub_user>/<dockerhub_repo> --build-arg arg=value .
@@ -30,8 +31,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         nano \
         procps \
 # Install system updates and tools
-        #gcc \          # multidic needs in the case of debian
-        #python3-dev \  # multidic needs in the case of debian
+        gcc \
+        python3-dev \
+        libyaml-dev \
         python3-setuptools \
         python3-pip \
         python3-wheel && \
@@ -43,11 +45,14 @@ ENV DEBIAN_FRONTEND=dialog
 WORKDIR /srv
 
 # Install user app:
-RUN git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3api.git && \
+# use TIME arg to force rebuild from this step
+ARG api_date=none
+RUN echo ${api_date} && git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3api.git && \
 # Install o3api
     cd o3api && \
+    # force installation of pyyaml with libyaml support
+    pip3 install --no-cache-dir pyyaml --global-option=--with-libyaml && \
     pip3 install --no-cache-dir -e . && \
-    pip3 install --no-cache-dir gunicorn && \
 # Clean up
     rm -rf /root/.cache/pip/* && \
     rm -rf /tmp/*

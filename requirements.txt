@@ -2,6 +2,7 @@ cftime
 flask
 flaat
 fpdf
+gunicorn<=20.0.4
 netcdf4
 xarray>=0.15.0
 #cdsapi>=0.2.7 # to download Copernicus Data Store, don't need here

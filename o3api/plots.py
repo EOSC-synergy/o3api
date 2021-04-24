@@ -55,21 +55,6 @@ def _profile(func):
 
     return wrapper
 
-def set_data_processing(plot_type, **kwargs):
-    """Function to inizialize proper class for data processing
-
-    :param plot_type: The plot type (e.g. tco3_zm, vmro3_zm, ...)
-    :return: object corresponding to the plot type
-    """
-    if plot_type == TCO3:
-        data = ProcessForTCO3(**kwargs)
-    elif plot_type == VMRO3:
-        data = ProcessForVMRO3(**kwargs)
-    elif plot_type == TCO3Return:
-        data = ProcessForTCO3Return(**kwargs)
-        
-    return data
-
 
 class Dataset:
     """Base Class to initialize the dataset
@@ -96,13 +81,26 @@ class Dataset:
         self._datafiles = glob.glob(os.path.join(cfg.O3AS_DATA_BASEPATH, 
                                                  model, 
                                                  self._data_pattern))
-
     def get_dataset(self, model):
+        """Load data from one datafile
+
+        :param model: The model to process
+        :return: xarray dataset
+        :rtype: xarray.Dataset
+        """
+        self.__set_datafiles(model)
+        ds = xr.open_dataset(self._datafiles[0], 
+                             cache=True,
+                             decode_cf=False) # decode_cf=False #faster?
+        ds = xr.decode_cf(ds)
+        return ds
+        
+    def get_mfdataset(self, model):
         """Load data from the datafile list
 
         :param model: The model to process
         :return: xarray dataset
-        :rtype: xarray
+        :rtype: xarray.Dataset
         """
         # Check: http://xarray.pydata.org/en/stable/dask.html#chunking-and-performance
         # chunks={'latitude': 8} - very machine dependent!
@@ -124,7 +122,7 @@ class Dataset:
                                    concat_dim=TIME,
                                    data_vars='minimal',
                                    coords='minimal',
-                                   parallel=False)
+                                   parallel=False) #False
         return ds
 
     
@@ -178,7 +176,8 @@ class DataSelection(Dataset):
         :rtype: xarray
         """
         ds = super().get_dataset(model)
-        logger.info(F"{model}: Dataset is loaded from storage location: {ds}")
+        logger.debug(F"{model}: Dataset is loaded from the storage location")
+        logger.debug(ds)
         
         # check in what order latitude is used, return them correspondently
         lat_a, lat_b = self.__check_latitude_order(ds)
@@ -188,7 +187,11 @@ class DataSelection(Dataset):
         # CFTime360day date format has 30 days for every month???
         # {}-01-01T00:00:00 .. {}-12-30T23:59:59
         if len(self.month) > 0:
-            ds = ds.sel(time=ds.time.dt.month.isin(self.month))
+            if all(x in range(1,13) for x in self.month):
+                ds = ds.sel(time=ds.time.dt.month.isin(self.month))
+            else:
+                logger.warning(F"Wrong month number! Using whole year range.\
+                Check values: {self.month}.")
 
         ds_slice = ds.sel(time=slice("{}-01".format(self.begin), 
                                      "{}-12".format(self.end)),
@@ -213,17 +216,11 @@ class DataSelection(Dataset):
         return ds_1980
 
 
-class ProcessForTCO3(DataSelection):
-    """Subclass of :class:`DataSelection` to calculate tco3_zm
-    """
-    def __init__(self, **kwargs):
-        super().__init__(TCO3, **kwargs)
-        
-    def __to_pd_series(self, ds, model):
-        """Convert xarray to pandas series
+    def to_pd_series(self, ds, model):
+        """Convert xarray variable to pandas series
         
         :param ds: xarray dataset
-        :param model: The model to process for tco3_zm
+        :param model: The model to process for self.plot_type
         :return dataset as pandas series
         :rtype: pandas series
         """
@@ -235,11 +232,63 @@ class ProcessForTCO3(DataSelection):
         else:
             time_axis = ds.indexes[TIME].to_datetimeindex()
 
-        curve = pd.Series(np.nan_to_num(ds[TCO3]),
+        curve = pd.Series(np.nan_to_num(ds[self.plot_type]),
                           index=pd.DatetimeIndex(time_axis),
-                          name=model)
+                          name=model).replace({0: np.nan})
         return curve
 
+
+    def to_pd_dataframe(self, ds, model):
+        """Convert xarray variable to pandas dataframe (faster method?)
+        
+        :param ds: xarray dataset
+        :param model: The model to process for self.plot_type
+        :return dataset as pandas dataframe
+        :rtype: pandas dataframe
+        """
+
+        # convert to pandas series to keep date information
+        if (type(ds.indexes[TIME]) is 
+            pd.core.indexes.datetimes.DatetimeIndex) :
+            time_axis = ds.indexes[TIME].values
+        else:
+            time_axis = ds.indexes[TIME].to_datetimeindex()
+
+        pd_model = pd.DataFrame({ model: np.nan_to_num(ds[self.plot_type]),
+                                  'time': time_axis}).replace({0: np.nan})
+        pd_model = pd_model.set_index('time')
+        return pd_model
+
+
+class ProcessForTCO3(DataSelection):
+    """Subclass of :class:`DataSelection` to calculate tco3_zm
+    """
+    def __init__(self, **kwargs):
+        super().__init__(TCO3, **kwargs)
+        self.ref_meas = kwargs[api_c['ref_meas']]
+        self.ref_year = kwargs[api_c['ref_year']]
+
+    def __smooth_boxcar(self, data, bwindow):
+        """Function to apply boxcar, following
+        https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
+        N.B. 'valid' replaced with 'same' !
+        """        
+        boxcar = np.ones(bwindow)
+        logger.debug("signal(raw) (len={}): {}".format(len(data),data))
+        # may have a problem with NaNs. try to interpolate. somehow does not work... comment.
+        # https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array?noredirect=1&lq=1
+        #nans, x= np.isnan(data), lambda z: z.nonzero()[0]
+        #data[nans]= np.interp(x(nans), x(~nans), data[~nans])
+        # mirror start and end of the original signal:
+        sgnl = np.r_[data[bwindow-1:0:-1],data,data[-2:-bwindow-1:-1]]
+        logger.debug("Signal (len={}): {}".format(len(sgnl),sgnl))
+        boxcar_values = signal.convolve(sgnl,
+                                        boxcar, 
+                                        mode='same')/bwindow
+        logger.debug("Signal+boxcar (len={}): {}".format(len(boxcar_values), 
+                                            boxcar_values))
+        return boxcar_values[bwindow-1:-(bwindow-1)]
+        
     def get_raw_data(self, model):
         """Process the model to get tco3_zm raw data
 
@@ -252,54 +301,189 @@ class ProcessForTCO3(DataSelection):
         ds_tco3 = ds_slice[[TCO3]].mean(dim=[LAT])
         logger.debug("ds_tco3: {}".format(ds_tco3))
 
-        data = self.__to_pd_series(ds_tco3, model)
+        data = self.to_pd_series(ds_tco3, model)
 
         return data
-        
-    def get_plot_data(self, model):
-        """Plot tco3_zm data applying a smoothing function (boxcar)
-        :param model: The model to process for tco3_zm
-        :return: ready for plotting data
-        :rtype: pandas series (pd.Series)
-        """
-        
-        curve = self.get_raw_data(model)
-        time_axis = curve.index
-        curve_values = curve.values
-        boxcar_win = 3
-        boxcar = np.ones(boxcar_win)
-        boxcar_values = signal.convolve(curve_values, 
-                                        boxcar, 
-                                        mode='same')/np.sum(boxcar)
-        logger.debug("time_axis.shape = {}, boxcar_values.shape = {}"
-                     .format(time_axis.shape, boxcar_values.shape))
-        boxcar_values[0] = curve_values[0]
-        boxcar_values[-1] = curve_values[-1]
-        #boxcar_values[1] = curve_values[1]
-        #boxcar_values[-2] = curve_values[-2]
-        logger.debug(F"boxcar_values[:5]  : {boxcar_values[:5]}")
-        logger.debug(F"vs curve_values[:5]: {curve_values[:5]}")
-        logger.debug(F"boxcar_values[-5:]  : {boxcar_values[-5:]}")
-        logger.debug(F"vs curve_values[-5:]: {curve_values[-5:]}")
-        boxcar_smooth = pd.Series(boxcar_values,
-                                  index=time_axis,
-                                  name=model)
-        return boxcar_smooth
 
-    def get_ref1980(self, model):
-        """Process the model to get tco3_zm reference for 1980
+    def get_raw_data_pd(self, model):
+        """Process the model to get tco3_zm raw data
 
         :param model: The model to process for tco3_zm
-        :return: xarray dataset for 1980
-        :rtype: xarray        
+        :return: raw data points in preparation for plotting
+        :rtype: pd.DataFrame
         """
-        # data selection according to 1980 and latitude
-        ds_slice = super().get_1980slice(model)
-        ds_tco3_1980 = ds_slice[[TCO3]].mean(dim=[LAT])
-        #logger.debug("ds_tco3_1980: {}".format(ds_tco3_1980.to_dataframe()))
-        ref1980 = ds_tco3_1980.to_dataframe().mean().values[0]
+        # data selection according to time and latitude
+        ds_slice = super().get_dataslice(model)
+        ds_tco3 = ds_slice[[TCO3]].mean(dim=[LAT])
+        logger.debug("ds_tco3: {}".format(ds_tco3))
 
-        return ref1980
+        data = self.to_pd_dataframe(ds_tco3, model)
+        return data
+    
+    def get_raw_ensemble_pd(self, models):
+        """Build the ensemble of tco3_zm models
+
+        :param models: Models to process for tco3_zm
+        :return: ensemble of models as pd.DataFrame
+        :rtype: pd.DataFrame
+        """        
+
+        data = self.get_raw_data_pd(models[0]) # initialize with first model
+        for m in models[1:]:
+            data = data.merge(self.get_raw_data_pd(m), 
+                             how='outer',
+                             on=['time'],
+                             sort=True)
+
+        pd.options.display.max_columns = None
+        return data
+
+    def get_ensemble_yearly(self, models):
+        """Rebin tco3_zm data for yearly entries
+        
+        :param models: Models to process for tco3_return
+        :return: yearly data points
+        :rtype: pd.DataFrame
+        """
+        data = self.get_raw_ensemble_pd(models)
+        return data.groupby([data.index.year]).mean()
+
+    def get_ref_value(self):
+        """Get reference value for the reference year
+        
+        :return: reference value (tco3_zm at reference year)
+        """
+        ref_data = self.get_raw_data_pd(self.ref_meas)
+        ref_values = ref_data[self.ref_meas][ref_data.index.year == self.ref_year].interpolate(method='linear').values
+        ref_value = np.mean(ref_values)
+        return ref_value
+
+    def get_ensemble_smoothed(self, models, smooth_win):
+        """Smooth tco3_zm data using boxcar
+        
+        :param models: Models to process for tco3_return
+        :return: smoothed data points
+        :rtype: pd.DataFrame
+        """        
+        data = self.get_ensemble_yearly(models)
+        last_year = data.index.values[-1]
+        # if last years have NaNs fill them with "before NaN values"
+        data[data.index > (last_year - smooth_win)] = data[data.index > (last_year - smooth_win)].fillna(method='ffill')
+        data = data.apply(self.__smooth_boxcar, args = [smooth_win], axis = 0, result_type = 'broadcast')
+        
+        return data
+
+    def get_ensemble_shifted(self, data):
+        """Shift tco3_zm data to reference year
+        
+        :param data: data to process as pd.DataFrame
+        :return: shifted data points for plotting 
+        :rtype: pd.DataFrame
+        """
+
+        ref_value = self.get_ref_value()
+        data_ref_year = data[data.index == self.ref_year].mean()
+        shift = ref_value - data_ref_year
+        data_shift = data + shift.values
+        
+        return data_shift
+        
+    def get_ensemble_stats(self, data):
+        """Calculate Mean, Std, Median for tco3_zm data
+        
+        :param data: data to process as pd.DataFrame
+        :return: updated pd.DateFrame with stats columns 
+        :rtype: pd.DataFrame
+        """        
+        data['MMMean'] = data.mean(axis=1, skipna=True)
+        data_std = data.std(axis=1, skipna=True)
+        data['MMMean-Std'] = data['MMMean'] - data_std
+        data['MMMean+Std'] = data['MMMean'] + data_std
+        data['MMMedian'] = data.median(axis=1, skipna=True) 
+        
+        return data
+
+    def get_ensemble_for_plot(self, models):
+        """Build the ensemble of tco3_zm models for plotting, include reference
+
+        :param models: Models to process for tco3_zm
+        :return: ensemble of models, including the reference, as pd.DataFrame
+        :rtype: pd.DataFrame
+        """  
+        boxcar_win = cfg.O3AS_TCO3Return_BOXCAR_WINDOW
+        data = self.get_ensemble_smoothed(models, boxcar_win)
+        data_shift = self.get_ensemble_shifted(data)
+        data_plot = self.get_ensemble_stats(data_shift)
+
+        if self.ref_meas in models:
+            data_ref_meas = self.get_ensemble_yearly([self.ref_meas])
+            data_plot[self.ref_meas] = data_ref_meas[self.ref_meas]
+
+        # inject 'reference_value'
+        ref_value = self.get_ref_value()
+        #ref_df = pd.DataFrame({'reference_value': [ref_value, ref_value], 
+        #                       'time': [data.index[0], 
+        #                                data.index[-1]]}).set_index('time')
+        #data_plot = data_plot.merge(ref_df, how='outer', on=['time'], sort=True)
+        data_plot['reference_value'] = ref_value
+
+        return data_plot
+
+class ProcessForTCO3Return(ProcessForTCO3):
+    """Subclass of :class:`ProcessForTCO3` to calculate tco3_return
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.region = kwargs['region']
+      
+    def get_return_years(self, data):
+        """Calculate return year for every model
+        
+        :param data: data to process
+        :return: return years for models
+        :rtype: pd.DataFrame
+        """
+        refMargin = 5
+        ref_value = self.get_ref_value()
+
+        def __get_return_year(data):
+            # 1. search for years with tco3_zm > ref_value
+            # 2. remove duplicates
+            # 3. only two rows will be left (False, True)
+            data_return = (data[data.index>(self.ref_year+refMargin)]>ref_value).drop_duplicates()
+            try:
+                idx = data_return.values.tolist().index(True)
+                return_year = data_return.index[idx]
+            except:
+                return_year = np.nan              
+
+            return return_year
+
+        return_years = {} # model: year
+        models = data.columns
+        [ return_years.update({m: __get_return_year(data[m])}) for m in models ]
+        logger.debug("return_years:", return_years)
+
+        data_return_years = pd.DataFrame(return_years, index=[self.region])
+        #data_return_years['mean_year'] = data_return_years.mean(axis=1, skipna=True)
+       
+        return data_return_years
+
+    def get_ensemble_for_plot(self, models):
+        """Build the ensemble of tco3_return points for plotting
+
+        :param models: Models to process for tco3_zm
+        :return: ensemble of models, including the mean, as pd.DataFrame
+        :rtype: pd.DataFrame
+        """  
+
+        boxcar_win = cfg.O3AS_TCO3Return_BOXCAR_WINDOW
+        data = self.get_ensemble_smoothed(models, boxcar_win)
+        data_shift = self.get_ensemble_shifted(data)
+        data_tco3 = self.get_ensemble_stats(data_shift)
+        data_return_years = self.get_return_years(data_tco3)
+
+        return data_return_years
 
 
 class ProcessForVMRO3(DataSelection):
@@ -323,26 +507,3 @@ class ProcessForVMRO3(DataSelection):
         logger.debug("ds_vmro3: {}".format(ds_vmro3))
 
         return ds_vmro3.mean(dim=[LAT])
-        
-
-class ProcessForTCO3Return(DataSelection):
-    """Subclass of :class:`DataSelection` to calculate tco3_return
-    """
-    def __init__(self, **kwargs):
-        super().__init__(TCO3Return, **kwargs)
-
-    def get_plot_data(self, model):
-        """Process the model to get tco3_return data for plotting
-
-        :param model: The model to process for tco3_return
-        :return: xarray dataset for plotting
-        :rtype: xarray        
-        """
-        # data selection according to time and latitude
-        ds_slice = super().get_dataslice(model)
-        # currently placeholder. another calculation might be needed
-        # 20-10-07 vkoz
-        ds_tco3_return = ds_slice[[TCO3Return]]
-        logger.debug("ds_tco3_return: {}".format(ds_tco3_return))
-
-        return ds_tco3_return.mean(dim=[LAT])
