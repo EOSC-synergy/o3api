@@ -96,46 +96,12 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: model
-          in: query
-          type: array
-          items:
-            type: string
-          description: Name(s) of model(s) (dataset-model)
-          default: [CCMI-1_ACCESS_ACCESS-CCM-refC2,CCMI-1_CCCma_CMAM-refC2,CCMI-1_CHASER-MIROC-ESM-refC2]
-          required: true
-        - name: begin
-          in: query
-          type: integer
-          description: Year to start data scanning from
-          default: 1959
-          required: false
-        - name: end
-          in: query
-          type: integer
-          description: Year to finish data scanning
-          default: 2100
-          required: false
-        - name: month
-          in: query
-          type: array
-          items:
-            type: integer
-          description: Month(s) to select, if not a whole year
-          default: []
-          required: false
-        - name: lat_min
-          in: query
-          type: integer
-          description: Latitude (min) to define the range (-90..90)
-          default: -90
-          required: false
-        - name: lat_max
-          in: query
-          type: integer
-          description: Latitude (max) to define the range (-90..90)
-          default: 90
-          required: false
+        - $ref: '#/parameters/ModelParam'
+        - $ref: '#/parameters/YearBeginParam'
+        - $ref: '#/parameters/YearEndParam'
+        - $ref: '#/parameters/MonthParam'
+        - $ref: '#/parameters/LatMinParam'
+        - $ref: '#/parameters/LatMaxParam'
       responses:
         200:
           description: "Successfully retrieved the data"
