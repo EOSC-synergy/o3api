@@ -88,6 +88,7 @@ class Dataset:
         :return: xarray dataset
         :rtype: xarray.Dataset
         """
+        logging.debug(F"get_dataset: {model}")
         self.__set_datafiles(model)
         ds = xr.open_dataset(self._datafiles[0], 
                              cache=True,
@@ -429,7 +430,7 @@ class ProcessForTCO3Return(ProcessForTCO3):
         """
         refMargin = 5
         ref_value = self.get_ref_value()
-
+        #logger.debug(F"ref_value: {ref_value}")
         def __get_return_year(data):
             # 1. search for years with tco3_zm > ref_value
             # 2. remove duplicates
@@ -446,7 +447,7 @@ class ProcessForTCO3Return(ProcessForTCO3):
         return_years = {} # model: year
         models = data.columns
         [ return_years.update({m: __get_return_year(data[m])}) for m in models ]
-        logger.debug("return_years:", return_years)
+        logger.debug(F"return_years: {return_years}")
 
         data_return_years = pd.DataFrame(return_years, index=[self.region])
         #data_return_years['mean_year'] = data_return_years.mean(axis=1, skipna=True)

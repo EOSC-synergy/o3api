@@ -22,7 +22,7 @@ LAT = cfg.netCDF_conf['lat_c']
 
 # configuration for API
 PTYPE = cfg.api_conf['plot_t']
-MODEL = cfg.api_conf['model']
+MODELS = cfg.api_conf['models']
 BEGIN = cfg.api_conf['begin']
 END = cfg.api_conf['end']
 MONTH = cfg.api_conf['month']
@@ -40,7 +40,7 @@ def cleanse_models(**kwargs):
     :rtype: list
     """
 
-    model_kwargs = list(filter(None, kwargs[MODEL])) # remove empty elements
+    model_kwargs = list(filter(None, kwargs[MODELS])) # remove empty elements
     # strip possible spaces in front and back, and then quotas
     models = [ m.strip().strip('\"') for m in model_kwargs ]
     
@@ -114,7 +114,7 @@ def set_filename(**kwargs):
         else:
             par_str = str(kwargs[val])
             
-        file_name += par_str + "_" if val != MODEL else ''
+        file_name += par_str + "_" if val != MODELS else ''
 
     # delete last "_"
     file_name = file_name[:-1] + ''

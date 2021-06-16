@@ -18,7 +18,7 @@ import xarray as xr
 debug = True
 
 # Directory for Skimmed data
-O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', "/srv/o3api/data/")
+O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', "/srv/o3api/data/Skimmed/")
 
 # Plot types
 TCO3 = 'tco3_zm'
@@ -43,42 +43,40 @@ for index, row in df.iterrows():
                 meta = yaml.safe_load(stream)
         else:
             meta = {'model' : model,
-                    'info': 'not available',
-                    'references': 'not available',
                      TCO3: {
                           "isdata": False,
-                          "plot": {
+                          "plotstyle": {
                               'color': "black",
-                              'style': "solid"
+                              'linestyle': "solid"
                               }
                           },
                      TCO3Return: {
                           "isdata": False,
-                          "plot": {
+                          "plotstyle": {
                               'color': "black",
-                              'style': "solid"
+                              'linestyle': "solid"
                               }
                           },
                      VMRO3: {
                           "isdata": False,
-                          "plot": {
+                          "plotstyle": {
                               'color': "black",
-                              'style': "solid"
+                              'linestyle': "solid"
                               }
                           },
                    }
-                   
+
         # set colors with the values from GoogleSheet
-        meta[row['parameter']]['plot'] = {
+        meta[row['parameter']]['plotstyle'] = {
                                           'color': row['plot_color'],
-                                          'style': row['plot_linestyle'],
+                                          'linestyle': row['plot_linestyle'],
                                           'marker': row['plot_marker']
                                          }
 
         if model is not model_prev:
             # model 1st entry => colors for all plot types set the same
             for ptype in PLOT_TYPES:
-                meta[ptype]['plot'].update(meta[row['parameter']]['plot'])
+                meta[ptype]['plotstyle'].update(meta[row['parameter']]['plotstyle'])
             # check for the data in directory, if there => isdata=True
             for f in os.listdir(m_path):
                  if "tco3" in f:
@@ -86,26 +84,6 @@ for index, row in df.iterrows():
                      meta[TCO3Return]['isdata'] = True
                  if "vmro3" in f:
                      meta[VMRO3]['isdata'] = True
-            # look for tco3_zm.nc, if exists => check for "info" and "references"
-            if any("tco3_zm.nc" in f for f in m_files):
-                ds = xr.open_mfdataset(os.path.join(m_path, 'tco3_zm.nc'),
-                                       concat_dim='time',
-                                       data_vars='minimal',
-                                       coords='minimal',
-                                       parallel=False)
-                model_info_dict = ds.to_dict(data=False)
-                if 'title' in model_info_dict['attrs'].keys():
-                    meta['info'] = model_info_dict['attrs']['title']
-
-                if 'references' in model_info_dict['attrs'].keys():
-                    meta['references'] = model_info_dict['attrs']['references']                
-
-        # if GoogleSheet has an entry for the "title" => use this one
-        if len(str(row['model_title'])) > 5:
-            meta['info'] = row['model_title']
-        # if GoogleSheet has an entry for the "references" => use this one
-        if len(str(row['model_references'])) > 5:
-            meta['references'] = row['model_references']
 
         # finally save the meta in metadata.yaml
         metadata_path = os.path.join(m_path, 'metadata.yaml')
