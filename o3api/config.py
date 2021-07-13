@@ -10,7 +10,7 @@ import logging
 import os
 
 # logging level accross various scripts
-log_level = logging.DEBUG #INFO # DEBUG # WARNING
+log_level = logging.INFO #INFO # DEBUG # WARNING
  
 # identify basedir for the package
 O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
@@ -20,6 +20,19 @@ O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
 # But one can change using environment $O3AS_DATA_BASEPATH
 O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', '/srv/o3api/data/')
 
+O3AS_MAIN_URL=os.getenv('O3AS_MAIN_URL', 'https://o3as.data.kit.edu')
+
+O3AS_LEGALINFO_TXT=('By using our service you agree to the Terms of Use:')
+O3AS_LEGALINFO_URL=os.getenv('O3AS_LEGALINFO_URL',
+                             'https://o3as.data.kit.edu/terms-of-use.html')
+
+O3AS_ACKNOWLEDGMENT_TXT=('Please, acknowledge the O3as service and ' + 
+                         'the original climate models:' )
+O3AS_ACKNOWLEDGMENT_URL=os.getenv('O3AS_ACKNOWLEDGMENT_URL',
+                             'https://o3as.data.kit.edu/how-to-acknowledge.html')
+
+O3AS_MODELNAME_SPLIT='_'
+
 O3AS_TCO3Return_BOXCAR_WINDOW = 10
 O3AS_TCO3Return_BEGIN_YEAR=1970
 O3AS_TCO3Return_END_YEAR=2100
@@ -27,6 +40,7 @@ O3AS_TCO3Return_END_YEAR=2100
 # should become obsolete:
 O3AS_TCO3_REF_MEAS = os.getenv('O3AS_TCO3_REF_MEAS', 'SBUV_GSFC_merged-SAT-ozone')
 O3AS_TCO3_REF_YEAR = os.getenv('O3AS_TCO3_REF_YEAR', 1980)
+#
 
 # list of trusted OIDC providers
 trusted_OP_list = [
@@ -84,7 +98,7 @@ tco3_return_regions = {
 plot_conf = {
     'plot_st' : 'plotstyle',
     netCDF_conf['tco3']: {
-        'fig_size': [9, 6],
+        'fig_size': (8.3, 6), #A4
         'xlabel': 'Year',
         'ylabel': 'Total column Ozone, zonal mean (DU)', #tco3_zm (DU)
         'plotstyle' : { 'color': 'color', 
@@ -92,7 +106,7 @@ plot_conf = {
                         'linewidth': 'linewidth'}
         },
     netCDF_conf['tco3_r']: {
-        'fig_size': [9, 6],
+        'fig_size': (8.3, 6), #A4
         'xlabel': 'Region',
         'ylabel': 'Return year',
         'plotstyle' : { 'color': 'color', 

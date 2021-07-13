@@ -5,10 +5,10 @@ fpdf
 gunicorn<=20.0.4
 netcdf4
 xarray>=0.15.0
-#cdsapi>=0.2.7 # to download Copernicus Data Store, don't need here
 numpy
 pandas
 matplotlib==3.2 # pandas.plot() uses depricated in 3.3. epoch2num()
+pypdf3
 scipy>=1.4.1
 statsmodels
 connexion[swagger-ui]

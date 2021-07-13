@@ -28,11 +28,11 @@
 import o3api.config as cfg
 import o3api.plothelpers as phlp
 import o3api.plots as o3plots
-import json
 import logging
 import matplotlib.style as mplstyle
 mplstyle.use('fast') # faster?
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 import os
@@ -53,9 +53,10 @@ import pstats
 
 from flask import send_file
 from flask import jsonify, make_response, request
-from fpdf import FPDF
+from fpdf import FPDF, HTMLMixin
 from functools import wraps
 from io import BytesIO
+from PyPDF3 import PdfFileMerger
 
 # conigure python logger
 logger = logging.getLogger('__name__') #o3api
@@ -196,7 +197,35 @@ def __convert_plot_style(models_style, ptype):
    
     return ckwargs
 
+def __dict_remove_elems(dict_in):
+    """Function to remove dictionary elements containing E-Mail addresses
+    
+    :param dict_in: input dictionary
+    :return: input dictionary where elements with E-Mail are removed
+    """
+    # https://stackoverflow.com/questions/17681670/extract-email-sub-strings-from-large-document/17681902
+    keys_to_delete = []
+    re_email_string = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
+    for key, value in dict_in.items():
+        re_match = re_email_string.search(str(value))
+        if re_match != None:
+            logger.debug(F"{key}:{value}, E-Mail: {re_match.group(0)}")
+            keys_to_delete.append(key)
 
+    if len(keys_to_delete) > 0:
+        for key in keys_to_delete:
+            del dict_in[key]
+
+    return dict_in
+
+
+def __legalinfo_link(model):
+    # extract name of the original data-source
+    #data_source = model.split(cfg.O3AS_MODELNAME_SPLIT)[0]  
+    #return (cfg.O3AS_LEGALINFO_URL + "#" + data_source)
+    return cfg.O3AS_LEGALINFO_URL
+
+ 
 def __return_json(df, model, pfmt):
     """Function to return JSON
 
@@ -206,7 +235,9 @@ def __return_json(df, model, pfmt):
     :return: JSON with points (x,y)
     """
     logger.debug(F"plotstyle: {pfmt}")
+
     data = {'model': model,
+            'legalinfo': __legalinfo_link(model),
             'x': df[model].dropna().index.tolist(),
             'y': df[model].dropna().values.tolist(), #curve[model]
             PLOT_ST: pfmt
@@ -355,6 +386,7 @@ def get_models_info():
         m_files = os.listdir(m_path)
         if (os.path.isdir(m_path)) and any(".nc" in f for f in m_files):
             meta = { 'model' : mdir,
+                     'legalinfo': __legalinfo_link(mdir),
                      TCO3: {
                           "isdata": False,
                           PLOT_ST: {
@@ -501,8 +533,10 @@ def get_model_detail(*args, **kwargs):
             # create dataset according to the plot type (tco3_zm, vmro3_zm, etc)
             data = o3plots.Dataset(pt, **kwargs)
             ds = data.get_dataset(model)
-            model_info_dict[pt]['data'] = ds.to_dict(data=False)
-
+            model_info_dict[pt]['original_metadata'] = ds.to_dict(data=False)
+            model_info_dict[pt]['original_metadata']['attrs']  = (
+            __dict_remove_elems(model_info_dict[pt]['original_metadata']['attrs']))
+    
     logger.debug(F"{model} model info: {model_info_dict}")
     return model_info_dict
 
@@ -586,7 +620,7 @@ def plot_tco3_zm(*args, **kwargs):
                                                                time_start))
     return response
 
-#@_catch_error
+@_catch_error
 def plot_tco3_return(*args, **kwargs):
     """Plot tco3_return
 
@@ -597,11 +631,11 @@ def plot_tco3_return(*args, **kwargs):
 
     kwargs[PTYPE] = TCO3Return
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
-    kwargs['begin'] = cfg.O3AS_TCO3Return_BEGIN_YEAR
-    kwargs['end'] = cfg.O3AS_TCO3Return_END_YEAR
-    user_month = kwargs['month']
-    user_lat_min = kwargs['lat_min']
-    user_lat_max = kwargs['lat_max']
+    kwargs[BEGIN] = cfg.O3AS_TCO3Return_BEGIN_YEAR
+    kwargs[END] = cfg.O3AS_TCO3Return_END_YEAR
+    user_month = kwargs[MONTH]
+    user_lat_min = kwargs[LAT_MIN]
+    user_lat_max = kwargs[LAT_MAX]
 
     # initialize an empty pd.DataFrame
     plot_data = pd.DataFrame()
@@ -611,17 +645,17 @@ def plot_tco3_return(*args, **kwargs):
         kwargs.update(p)
         #kwargs['lat_min'] = p['lat_min'] 
         #kwargs['lat_max'] = p['lat_max']
-        if 'month' not in p.keys():
-            kwargs['month'] = ''
+        if MONTH not in p.keys():
+            kwargs[MONTH] = ''
         data = o3plots.ProcessForTCO3Return(**kwargs)
         data_return = data.get_ensemble_for_plot(kwargs[MODELS])
         plot_data = plot_data.append(data_return)
 
     # Then draw the user-defined region
     kwargs['region'] = 'User region'
-    kwargs['month'] = user_month
-    kwargs['lat_min'] = user_lat_min
-    kwargs['lat_max'] = user_lat_max
+    kwargs[MONTH] = user_month
+    kwargs[LAT_MIN] = user_lat_min
+    kwargs[LAT_MAX] = user_lat_max
     #('User region (' + str(kwargs['lat_min']) + ', ' + str(kwargs['lat_max']) + ')')
     data = o3plots.ProcessForTCO3Return(**kwargs)
     plot_data = plot_data.append(data.get_ensemble_for_plot(kwargs[MODELS]))
@@ -701,6 +735,7 @@ def plot_vmro3_zm(*args, **kwargs):
 
 #@_profile
 #@flaat.login_required() # Require only authorized people to call the function
+    
 def plot(data, ckwargs, **kwargs):
     """Main plotting routine
 
@@ -711,7 +746,7 @@ def plot(data, ckwargs, **kwargs):
     """
     plot_type = kwargs[PTYPE]
     # update the list of models as columns from pd.DataFrame
-    # as additional columns can be added, e.g. 'reference_year', 'mean' etc
+    # since additional columns can be added, e.g. 'reference_year', 'mean' etc
     models = data.columns
 
     logger.debug(F"headers: {dict(request.headers)}")
@@ -726,10 +761,9 @@ def plot(data, ckwargs, **kwargs):
 
         if model != 'MMMean-Std' and model != 'MMMean+Std':
             df[model].plot(**ckwargs[model]) #.dropna()
-  
 
     figure_file = phlp.set_filename(**kwargs) + ".pdf"
-    fig = plt.figure(num=None, figsize=(plot_c[plot_type]['fig_size']), 
+    fig = plt.figure(num=1, figsize=(plot_c[plot_type]['fig_size']), 
                      dpi=150, facecolor='w',
                      edgecolor='k')
 
@@ -744,17 +778,49 @@ def plot(data, ckwargs, **kwargs):
 
     phlp.set_figure_attr(fig, **kwargs)
 
+    # create the figure
     buffer_plot = BytesIO()  # store in IO buffer, not a file
+    fig_upd = plt.gcf()
+    fig_upd.set_figwidth(plot_c[plot_type]['fig_size'][0], forward=True)
     plt.savefig(buffer_plot, format='pdf', bbox_inches='tight')
-    plt.close(fig)
+    plt.close()
     buffer_plot.seek(0)
 
-    response = send_file(buffer_plot,
+    # create the metadata page + legal info
+    buffer_meta = BytesIO()  # store in IO buffer, not a file
+    # Instantiation of inherited class
+    class infoFPDF(FPDF, HTMLMixin):
+        pass
+    pdf = infoFPDF('P', 'mm', 'A4')
+    pdf.add_page()
+    pdf.set_font('Times', '', 12)
+    info_html = phlp.get_plot_info_html(**kwargs)
+    pdf.write_html(info_html)
+    pdf_output = pdf.output(dest='S')
+    buffer_meta.write(pdf_output.encode('latin-1')) # 'utf-8'
+
+    buffer_meta.seek(0)
+
+    # merge two pages in one PDF, add PDF meta
+    merger = PdfFileMerger()
+    merger.append(buffer_plot)
+    merger.append(buffer_meta)
+    merger.addMetadata({
+        '/Creator': cfg.O3AS_MAIN_URL,
+        '/Title': plot_c[plot_type]['ylabel'],
+        '/Subject': plot_type + ' generated with ' + cfg.O3AS_MAIN_URL
+    })
+
+    buffer_out = BytesIO()
+    merger.write(buffer_out)
+    buffer_out.seek(0)
+    response = send_file(buffer_out,
                          as_attachment=True,
                          attachment_filename=figure_file,
                          mimetype='application/pdf')
 
     return response
+
 
 def plot_json(data, ckwargs, **kwargs):
     """Plotting routine returning JSON points

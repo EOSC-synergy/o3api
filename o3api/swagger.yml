@@ -2,11 +2,13 @@ swagger: '2.0'
 info:
   version: 0.6.2
   title: Swagger REST API for O3as
-  description: "This is our **O3as REST API** based on the OpenAPI specification and leveraging Swagger UI.
+  description: "This is **O3as REST API** based on the OpenAPI specification and leveraging Swagger UI for the [Ozone assessment service](https://o3as.data.kit.edu).\n
   
-  For more information, please, visit [https://o3as.data.kit.edu](https://o3as.data.kit.edu).
+  For the detailed documentation, please, visit [O3as documention](https://o3as.readthedocs.io).\n
   
-  For the detailed documentation, please, visit [O3as documention](https://o3as.readthedocs.io)."
+  **By using our service you agree to the [Terms of Use](https://o3as.data.kit.edu/terms-of-use.html)** "
+
+  termsOfService: https://o3as.data.kit.edu/terms-of-use.html
   contact:
     name: O3as support
     email: o3as-support@lists.kit.edu

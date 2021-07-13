@@ -74,29 +74,75 @@ def get_periodicity(pd_time):
     return int(round(periodicity, 0))
 
 
-def set_plot_title(**kwargs):
-    """Set plot title
+def get_plot_params(**kwargs):
+    """Get plot parameters
 
     :param kwargs: The provided in the API call parameters
-    :return: plot_title with added input parameters
+    :return: plot_params with added input parameters
     :rtype: string
     """
     plot_type = kwargs[PTYPE]
-    plot_title = ("requested: " + plot_type + ", " + 
+    plot_params = ("requested: " + plot_type + ", " + 
                   str(kwargs[BEGIN]) + ".." + str(kwargs[END]))
     if len(kwargs[MONTH]) > 0:
-        plot_title += (", month: ")
+        plot_params += (", month: ")
         for i in kwargs[MONTH]:
-            plot_title += str(i) + "," 
-        #plot_title = plot_title[:-1] + ""
+            plot_params += str(i) + "," 
+        #plot_params = plot_params[:-1] + ""
     else:
-        plot_title += ", full_year,"
+        plot_params += ", full_year,"
 
     deg_sign= u'\N{DEGREE SIGN}'
-    plot_title += (" latitudes: " + str(kwargs[LAT_MIN]) + deg_sign + ".." +
+    plot_params += (" latitudes: " + str(kwargs[LAT_MIN]) + deg_sign + ".." +
                    str(kwargs[LAT_MAX]) + deg_sign)
 
-    return plot_title
+    return plot_params
+
+def get_plot_info_txt(**kwargs):
+    """Generate info text for the plot
+
+    :param kwargs: The provided  in the API call parameters
+    :return: information text with legal info, parameters etc
+    :rtype: string
+    """
+
+    params_txt = get_plot_params(**kwargs)
+    plot_infotxt=F"""
+{cfg.O3AS_LEGALINFO_TXT} \n
+{cfg.O3AS_LEGALINFO_URL} \n \n
+{cfg.O3AS_ACKNOWLEDGMENT_TXT} \n
+{cfg.O3AS_ACKNOWLEDGMENT_URL} \n\n
+This plot is generated with {cfg.O3AS_MAIN_URL} \n\n
+The following input parameters were used for the plot:\n
+{params_txt}
+"""
+    
+    return plot_infotxt
+
+def get_plot_info_html(**kwargs):
+    """Generate info text (HTML) for the plot
+
+    :param kwargs: The provided  in the API call parameters
+    :return: information text (HTML) with legal info, parameters etc
+    :rtype: string
+    """
+
+    params_txt = get_plot_params(**kwargs)
+    plot_infohtml=F"""
+<p><b>{cfg.O3AS_LEGALINFO_TXT}</b></p><br>
+<a href=\"{cfg.O3AS_LEGALINFO_URL}s\">{cfg.O3AS_LEGALINFO_URL}</a>
+<p></p>
+<p><b>{cfg.O3AS_ACKNOWLEDGMENT_TXT}</b></p><br>
+<a href=\"{cfg.O3AS_ACKNOWLEDGMENT_URL}\">{cfg.O3AS_ACKNOWLEDGMENT_URL}</a>
+<p></p>
+<p>This plot is generated with <a href=\"{cfg.O3AS_MAIN_URL}\">{cfg.O3AS_MAIN_URL}</a> </p>
+<p></p>
+<p>The following input parameters were used for the plot: </p><br>
+{params_txt}
+<p></p>
+"""
+    
+    return plot_infohtml
 
     
 def set_filename(**kwargs):
@@ -134,8 +180,8 @@ def set_figure_attr(fig, **kwargs):
 
     plt.xlabel(plot_c[plot_type]['xlabel'], fontsize='large')
     plt.ylabel(plot_c[plot_type]['ylabel'], fontsize='large')
-    plt.title(set_plot_title(**kwargs),
-              fontsize='medium', color='gray')
+    #plt.title(set_plot_title(**kwargs),
+    #          fontsize='medium', color='gray')
     num_col = len(models) // 12
     num_col = num_col if (len(models) % 12 == 0) else num_col + 1
     ax = plt.gca() # get axis instance
@@ -147,6 +193,6 @@ def set_figure_attr(fig, **kwargs):
                borderaxespad=0.)
     fig.text(ax_pos.x0 + ax_pos.width - 0.01,
              ax_pos.y0 + ax_pos.height - 0.01,
-             'Generated with o3as.data.kit.edu',
+             'Generated with ' + cfg.O3AS_MAIN_URL,
              fontsize='medium', color='gray',
              ha='right', va='top', alpha=0.5)

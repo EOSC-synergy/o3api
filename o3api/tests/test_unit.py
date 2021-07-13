@@ -87,10 +87,11 @@ class TestPackageMethods(unittest.TestCase):
 
         data_base_path = 'tmp/data'
         ptype = TCO3
-        #os.environ["O3API_DATA_BASEPATH"] = self.data_base_path
         cfg.O3AS_DATA_BASEPATH = data_base_path
         cfg.O3AS_TCO3_REF_MEAS = self.ref_meas
         cfg.O3AS_TCO3_REF_YEAR = self.ref_year
+
+        self.fake_email = 'no-reply@fakeaddress.domain'
 
         # metadata
         self.metayaml = {TCO3: {'plotstyle': { 'color': 'black',
@@ -141,7 +142,13 @@ class TestPackageMethods(unittest.TestCase):
                         LAT : [x for x in range(-90, 100, 10)],
                         TIME: [ self.start_date + np.timedelta64(x, 'M') 
                                   for x in range(0, 12*delta_years, 1)]
-                       }
+                       },
+                attrs={
+                        'Conventions': 'CF-1.4',
+                        'comment': 'test data in '+ m,
+                        'contact': self.fake_email,
+                        'experiment': 'Projection',
+                      }
             )
 
             end_year = self.end_date.astype('datetime64[Y]').astype(int) + 1970
@@ -175,7 +182,7 @@ class TestPackageMethods(unittest.TestCase):
 
         # initialize how to process data
         self.data = o3plots.ProcessForTCO3(**self.kwargs)
-            
+
         # initialize the plot title and filename
         deg_sign= u'\N{DEGREE SIGN}'
         self.plot_title = ('requested: ' +
@@ -256,6 +263,17 @@ class TestPackageMethods(unittest.TestCase):
         o3model_detail = o3api.get_model_detail(**o3kwargs)
         self.assertTrue(type(o3model_detail) is dict)
 
+    def test_get_model_detail_no_email(self):
+        """
+        Test that model detail does not contain emails
+        """
+        o3kwargs = {
+            'model': self.kwargs[MODELS][0]
+        }
+        o3model_detail = o3api.get_model_detail(**o3kwargs)
+        logger.info(o3model_detail)
+        self.assertNotIn(self.fake_email, str(o3model_detail))
+
     def test_get_dataset_values(self):
         """
         Test that returned dataset values are the same as generated.
@@ -334,12 +352,16 @@ class TestPackageMethods(unittest.TestCase):
         o3plot_filename = phlp.set_filename(**self.kwargs)
         self.assertEqual(self.plot_filename, o3plot_filename)
 
-    def test_get_plot_title(self):
+    def test_get_plot_info_html(self):
         """
-        Test setting of the plot title
+        Test setting of the plot info (HTML)
         """
-        o3plot_title = phlp.set_plot_title(**self.kwargs)
-        self.assertEqual(self.plot_title, o3plot_title)
+        o3plot_info = phlp.get_plot_info_html(**self.kwargs)
+        self.assertIn(cfg.O3AS_LEGALINFO_TXT, o3plot_info)
+        self.assertIn(cfg.O3AS_LEGALINFO_URL, o3plot_info)
+        self.assertIn(cfg.O3AS_ACKNOWLEDGMENT_TXT, o3plot_info)
+        self.assertIn(cfg.O3AS_ACKNOWLEDGMENT_URL, o3plot_info)
+        self.assertIn(self.kwargs[PTYPE], o3plot_info)
 
 
 #class TestTCO3ReturnMethods(TestPackageMethods):
