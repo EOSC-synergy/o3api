@@ -61,7 +61,7 @@ class TestPackageMethods(unittest.TestCase):
             'version' : None,
             'summary' : 'REST API for the O3as service to analyse Ozone projections',
             'home-page' : 'https://git.scc.kit.edu/synergy.o3as/o3api',
-            'author' : 'KIT-IMK, KIT-SCC',
+            'author' : 'KIT-IMK-ASF, KIT-SCC',
             'author-email' : 'tobias.kerzenmacher@kit.edu, borja.sanchis@kit.edu, valentin.kozlov@kit.edu',
             'license' : 'GNU LGPLv3'
         }
