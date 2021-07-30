@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: o3api-deployment
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      name: o3api-pod
+  template:
+    metadata:
+      name: o3api-template
+      labels:
+        name: o3api-pod
+    spec:
+      nodeName: vnode-1.localdomain
+      #nodeSelector:
+      #  node-role.kubernetes.io/master: ''
+      containers:
+      - name: o3api-app
+        image: o3as/o3api
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "1.1Gi"
+            cpu: "600m"
+        ports:
+        - containerPort: 5005
+          name: port0
+        #tolerations:
+        #- key: node-role.kubernetes.io/master
+        #  effect: NoSchedule
+        env:
+        - name: O3AS_DATA_BASEPATH
+          value: /mnt/o3as-data/Skimmed
+        - name: O3AS_LEGALINFO_URL
+          value: https://o3as.data.kit.edu/policies/terms-of-use.html
+        - name: O3AS_ACKNOWLEDGMENT_URL
+          value: https://o3as.data.kit.edu/policies/how-to-acknowledge.html
+        - name: O3API_TIMEOUT
+          value: "600"
+        volumeMounts:
+        - mountPath: /mnt/o3as-data
+          name: nfs-o3as-data
+      volumes:
+      - name: o3as-data
+        hostPath:
+          path: /mnt/o3as-data
+          type: Directory
+      - name: nfs-o3as-data
+        nfs:
+          path: /pv/o3as-data
+          server: kubeserver
+
+# Service
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: o3api-service
+spec:
+  selector:
+    name: o3api-pod
+  ports:
+    - protocol: TCP
+      name: http2
+      port: 5005
+      nodePort: 30505
+  type: NodePort
+#  type: LoadBalancer
+
+# Horizonthal Pod Scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: o3api-hpa
+spec:
+  maxReplicas: 3
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: o3api-deployment
+  targetCPUUtilizationPercentage: 50
+
