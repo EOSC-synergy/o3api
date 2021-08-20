@@ -1,0 +1,76 @@
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: o3api-deployment
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      name: o3api-pod
+  template:
+    metadata:
+      name: o3api-template
+      labels:
+        name: o3api-pod
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  name: o3api-pod
+              topologyKey: kubernetes.io/hostname
+      priorityClassName: production-medium
+      containers:
+      - name: o3api-app
+        image: o3as/o3api
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "900Mi"
+            cpu: "1100m"
+          limits:
+            memory: "900Mi"
+            cpu: "1100m"
+        ports:
+        - containerPort: 5005
+          name: port0
+        env:
+        - name: O3AS_DATA_BASEPATH
+          value: /mnt/o3as-data/Skimmed
+        - name: O3AS_LEGALINFO_URL
+          value: https://o3as.data.kit.edu/policies/terms-of-use.html
+        - name: O3AS_ACKNOWLEDGMENT_URL
+          value: https://o3as.data.kit.edu/policies/how-to-acknowledge.html
+        - name: O3API_TIMEOUT
+          value: "600"
+        - name: O3API_WORKERS
+          value: "2"
+        volumeMounts:
+        - mountPath: /mnt/o3as-data
+          name: nfs-o3as-data
+      volumes:
+      - name: nfs-o3as-data
+        nfs:
+          path: /pv/o3as-data
+          server: kubeserver
+
+# Priority class
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: production-medium
+value: 9000
+globalDefault: false
+description: "This priority class should be used for o3as service pods only."
+
+# + Apply o3api-service.yaml for Service
+# + Apply o3api-hpa.yaml for Horizonthal Pod Autoscaling

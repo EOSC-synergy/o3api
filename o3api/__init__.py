@@ -43,6 +43,19 @@ def home():
 
     return render_template('index.html')
 
+# Duplicate same static page at /api endpoint as well.
+# In future may list different API versions
+@app.route('/api')
+def api_home():
+    """This function just responds to the browser URL localhost:5000/api
+    :return:        the rendered template 'index.html'
+    """
+    logger.debug("O3API_LISTEN_IP:O3API_PORT = {}:{}".format(o3api_listen_ip, 
+                                                     o3api_port))
+
+    return render_template('index.html')
+
+
 # from app import routes
 
 if __name__ == "__main__":

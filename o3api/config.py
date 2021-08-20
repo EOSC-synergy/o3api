@@ -24,12 +24,12 @@ O3AS_MAIN_URL=os.getenv('O3AS_MAIN_URL', 'https://o3as.data.kit.edu')
 
 O3AS_LEGALINFO_TXT=('By using our service you agree to the Terms of Use:')
 O3AS_LEGALINFO_URL=os.getenv('O3AS_LEGALINFO_URL',
-                             'https://o3as.data.kit.edu/terms-of-use.html')
+                             'https://o3as.data.kit.edu/policies/terms-of-use.html')
 
 O3AS_ACKNOWLEDGMENT_TXT=('Please, acknowledge the O3as service and ' + 
                          'the original climate models:' )
 O3AS_ACKNOWLEDGMENT_URL=os.getenv('O3AS_ACKNOWLEDGMENT_URL',
-                             'https://o3as.data.kit.edu/how-to-acknowledge.html')
+                             'https://o3as.data.kit.edu/policies/how-to-acknowledge.html')
 
 O3AS_MODELNAME_SPLIT='_'
 

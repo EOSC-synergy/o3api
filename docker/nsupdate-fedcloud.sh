@@ -5,7 +5,7 @@
 ###
 
 LOGFILE="nsupdate-fedcloud.log"
-SITE="o3api.test.fedcloud.eu"
+SITE="api.o3as.fedcloud.eu"
 SECRET="SSEECCRREETT"
 echo $(date +"%F %T %Z") >> ${LOGFILE}
 curl https://$SITE:$SECRET@nsupdate.fedcloud.eu/nic/update >> ${LOGFILE}

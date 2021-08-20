@@ -130,7 +130,7 @@ def get_plot_info_html(**kwargs):
     params_txt = get_plot_params(**kwargs)
     plot_infohtml=F"""
 <p><b>{cfg.O3AS_LEGALINFO_TXT}</b></p><br>
-<a href=\"{cfg.O3AS_LEGALINFO_URL}s\">{cfg.O3AS_LEGALINFO_URL}</a>
+<a href=\"{cfg.O3AS_LEGALINFO_URL}\">{cfg.O3AS_LEGALINFO_URL}</a>
 <p></p>
 <p><b>{cfg.O3AS_ACKNOWLEDGMENT_TXT}</b></p><br>
 <a href=\"{cfg.O3AS_ACKNOWLEDGMENT_URL}\">{cfg.O3AS_ACKNOWLEDGMENT_URL}</a>
