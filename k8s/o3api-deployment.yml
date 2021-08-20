@@ -1,3 +1,4 @@
+# Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,26 +19,30 @@ spec:
       labels:
         name: o3api-pod
     spec:
-      nodeName: vnode-1.localdomain
-      #nodeSelector:
-      #  node-role.kubernetes.io/master: ''
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  name: o3api-pod
+              topologyKey: kubernetes.io/hostname
+      priorityClassName: production-medium
       containers:
       - name: o3api-app
         image: o3as/o3api
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "900Mi"
+            cpu: "1100m"
           limits:
-            memory: "1.1Gi"
-            cpu: "600m"
+            memory: "900Mi"
+            cpu: "1100m"
         ports:
         - containerPort: 5005
           name: port0
-        #tolerations:
-        #- key: node-role.kubernetes.io/master
-        #  effect: NoSchedule
         env:
         - name: O3AS_DATA_BASEPATH
           value: /mnt/o3as-data/Skimmed
@@ -47,47 +52,25 @@ spec:
           value: https://o3as.data.kit.edu/policies/how-to-acknowledge.html
         - name: O3API_TIMEOUT
           value: "600"
+        - name: O3API_WORKERS
+          value: "2"
         volumeMounts:
         - mountPath: /mnt/o3as-data
           name: nfs-o3as-data
       volumes:
-      - name: o3as-data
-        hostPath:
-          path: /mnt/o3as-data
-          type: Directory
       - name: nfs-o3as-data
         nfs:
           path: /pv/o3as-data
           server: kubeserver
 
-# Service
----
-kind: Service
-apiVersion: v1
+# Priority class
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
 metadata:
-  name: o3api-service
-spec:
-  selector:
-    name: o3api-pod
-  ports:
-    - protocol: TCP
-      name: http2
-      port: 5005
-      nodePort: 30505
-  type: NodePort
-#  type: LoadBalancer
+  name: production-medium
+value: 9000
+globalDefault: false
+description: "This priority class should be used for o3as service pods only."
 
-# Horizonthal Pod Scaling
-apiVersion: autoscaling/v1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: o3api-hpa
-spec:
-  maxReplicas: 3
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: o3api-deployment
-  targetCPUUtilizationPercentage: 50
-
+# + Apply o3api-service.yaml for Service
+# + Apply o3api-hpa.yaml for Horizonthal Pod Autoscaling

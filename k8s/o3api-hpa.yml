@@ -1,0 +1,31 @@
+# HPA: Horizonthal Pod Scaling
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: o3api-hpa
+spec:
+  maxReplicas: 4
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: o3api-deployment
+  targetCPUUtilizationPercentage: 50
+
+# VPA: Vertical Pod Autoscaler in OFF regime to collect usage
+# NEED to install CRDs???
+#apiVersion: autoscaling.k8s.io/v1
+#kind: VerticalPodAutoscaler
+#metadata:
+#  name: o3api-vpa
+#spec:
+#  targetRef:
+#    apiVersion: apps/v1
+#    kind: Deployment
+#    name: o3api-deployment
+#  updatePolicy: 
+#    updateMode: "Off"   # !!!
+#  resourcePolicy:
+#    containerPolicies:
+#      - containerName: "*"
+#        controlledResources: ["cpu", "memory"]

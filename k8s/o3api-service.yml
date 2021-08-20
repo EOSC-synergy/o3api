@@ -1,0 +1,15 @@
+# Service
+kind: Service
+apiVersion: v1
+metadata:
+  name: o3api-service
+spec:
+  selector:
+    name: o3api-pod
+  ports:
+    - protocol: TCP
+      name: http2
+      port: 5005
+      nodePort: 30505
+  type: NodePort
+#  type: LoadBalancer

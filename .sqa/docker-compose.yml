@@ -16,5 +16,5 @@ services:
         dockerfile: "./o3api/docker/Dockerfile"
         args:
           branch: ${GIT_BRANCH}
-          api_date: 2107140644
+          api_date: 2108201754
      image: "o3as/o3api:${O3API_DOCKER_TAG}"
