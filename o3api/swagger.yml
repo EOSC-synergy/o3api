@@ -1,453 +1,524 @@
-swagger: '2.0'
+openapi: 3.0.1
 info:
-  version: 0.6.2
   title: Swagger REST API for O3as
-  description: "This is **O3as REST API** based on the OpenAPI specification and leveraging Swagger UI for the [Ozone assessment service](https://o3as.data.kit.edu).\n
-  
-  For the detailed documentation, please, visit [O3as documention](https://o3as.readthedocs.io).\n
-  
-  **By using our service you agree to the [Terms of Use](https://o3as.data.kit.edu/policies/terms-of-use.html)** "
-
-  termsOfService: https://o3as.data.kit.edu/policies/terms-of-use.html
+  description: "This is **O3as REST API** based on the OpenAPI specification and leveraging\
+    \ Swagger UI for the [Ozone assessment service](https://o3as.data.kit.edu).\n\n\
+    For the detailed documentation, please, visit [O3as documention](https://o3as.readthedocs.io).\n\
+    \n**By using our service you agree to the [Terms of Use](https://o3as.data.kit.edu/policies/terms-of-use.html)** "
+  #termsOfService: https://o3as.data.kit.edu/policies/terms-of-use.html
   contact:
     name: O3as support
     email: o3as-support@lists.kit.edu
   license:
     name: Licensed under GPLv3
     url: https://git.scc.kit.edu/synergy.o3as/o3api/-/raw/master/LICENSE
-basePath: /api/v1
-schemes:
- - https
- - http
-consumes:
-  - application/json
-parameters:
-  ModelsParam:
-    in: body
-    required: false
-    name: models
-    schema:
-      type: array
-      #required: false
-      #x-nullable: true
-      items:
-        type: string
-      description: Name(s) of model(s) (dataset-model)
-      example:
-        - CCMI-1_ACCESS_ACCESS-CCM-refC2
-        - CCMI-1_CCCma_CMAM-refC2
-        - CCMI-1_CHASER-MIROC-ESM-refC2
-      default: []
-  ModelsParamReq:
-    in: body
-    required: true
-    name: models
-    description: Name(s) of model(s) (dataset-model)
-    schema:
-      type: array
-      items:
-        type: string
-      #default:
-      #  - CCMI-1_ACCESS_ACCESS-CCM-refC2
-      #  - CCMI-1_CCCma_CMAM-refC2
-      #  - CCMI-1_CHASER-MIROC-ESM-refC2
-  YearBeginParam:
-    name: begin
-    in: query
-    type: integer
-    description: Year to start data scanning from
-    default: 1959
-    required: false
-  YearEndParam:
-    name: end
-    in: query
-    type: integer
-    description: Year to finish data scanning
-    default: 2100
-    required: false
-  MonthParam:
-    name: month
-    in: query
-    type: array
-    items:
-      type: integer
-    description: Month(s) to select, if not a whole year
-    default: []
-    required: false
-  LatMinParam:
-    name: lat_min
-    in: query
-    type: integer
-    description: Latitude (min) to define the range (-90..90)
-    default: -90
-    required: false
-  LatMaxParam:
-    name: lat_max
-    in: query
-    type: integer
-    description: Latitude (max) to define the range (-90..90)
-    default: 90
-    required: false
-  RefMeasParam:
-    name: ref_meas
-    in: query
-    type: string
-    description: Reference observational measurument
-    default: SBUV_GSFC_merged-SAT-ozone
-    required: true
-  RefYearParam:
-    name: ref_year
-    in: query
-    type: integer
-    description: Reference year for the obsevational measurement
-    default: 1980
-    required: true
+  version: 0.7.0
+servers:
+- url: /api/v1
 paths:
   /apiinfo:
     get:
-      operationId: o3api.api.get_api_info
       tags:
-        - api
+      - api
       summary: Returns information about the API
       description: Information about the API (o3api metadata)
-      produces:
-        - application/json
+      operationId: o3api.api.get_api_info
       responses:
-        '200':
+        200:
           description: Successfully returned o3api info
-          schema:
-            $ref: '#/definitions/ApiInfo'
-        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+        404:
           description: Requested resource not found
+          content: {}
   /data:
     get:
-      operationId: o3api.api.get_data_types
       tags:
-        - data
+      - data
       summary: Returns a list of plot types with the available raw data
       description: List of plot types with the available raw data
-      produces:
-        - application/json
+      operationId: o3api.api.get_data_types
       responses:
-        '200':
+        200:
           description: Successfully returned the list of data types
-          schema:
-            $ref: '#/definitions/DataList'
-        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataList'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /data/tco3_zm:
     post:
-      operationId: o3api.api.get_data_tco3_zm
       tags:
-        - data
+      - data
       summary: Returns raw data for tco3_zm
       description: Raw data to be processed for building tco3_zm plot
-      produces:
-        - application/json
+      operationId: o3api.api.get_data_tco3_zm
       parameters:
-        - $ref: '#/parameters/ModelsParamReq'
-        - $ref: '#/parameters/YearBeginParam'
-        - $ref: '#/parameters/YearEndParam'
-        - $ref: '#/parameters/MonthParam'
-        - $ref: '#/parameters/LatMinParam'
-        - $ref: '#/parameters/LatMaxParam'
+        - $ref: '#/components/parameters/YearBeginParam'
+        - $ref: '#/components/parameters/YearEndParam'
+        - $ref: '#/components/parameters/MonthParam'
+        - $ref: '#/components/parameters/LatMinParam'
+        - $ref: '#/components/parameters/LatMaxParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ModelsParamReq'      
       responses:
-        '200':
+        200:
           description: Successfully retrieved the data
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/O3Data'
-        '404':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/O3Data'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: models
   /data/tco3_return:
     post:
-      operationId: o3api.api.get_data_tco3_return
       tags:
-        - data
+      - data
       summary: Returns raw data for tco3_return
       description: Raw data to be processed for building tco3_return plot
-      produces:
-        - application/json
+      operationId: o3api.api.get_data_tco3_return
       parameters:
-        - $ref: '#/parameters/ModelsParamReq'
-        - $ref: '#/parameters/YearBeginParam'
-        - $ref: '#/parameters/YearEndParam'
-        - $ref: '#/parameters/MonthParam'
-        - $ref: '#/parameters/LatMinParam'
-        - $ref: '#/parameters/LatMaxParam'
+        - $ref: '#/components/parameters/YearBeginParam'
+        - $ref: '#/components/parameters/YearEndParam'
+        - $ref: '#/components/parameters/MonthParam'
+        - $ref: '#/components/parameters/LatMinParam'
+        - $ref: '#/components/parameters/LatMaxParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ModelsParamReq'
       responses:
-        '200':
+        200:
           description: Successfully retrieved the data
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/O3Data'
-        '404':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/O3Data'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: models
   /models:
     get:
-      operationId: o3api.api.get_models_list
       tags:
-        - models
+      - models
       summary: Returns a list of available models
       description: List of available models
-      produces:
-        - application/json
+      operationId: o3api.api.get_models_list
       parameters:
-        - name: ptype
-          in: query
+      - name: ptype
+        in: query
+        description: Plot type (tco3_return, tco3_zm, vmro3_zm)
+        schema:
           type: string
-          description: 'Plot type (tco3_return, tco3_zm, vmro3_zm)'
-          required: false
-        - name: select
-          in: query
+      - name: select
+        in: query
+        description: Select models according to the {select} pattern
+        schema:
           type: string
-          description: 'Select models according to the {select} pattern'
-          required: false
       responses:
-        '200':
+        200:
           description: Successfully returned list of models
-          schema:
-            $ref: '#/definitions/ModelsList'
-        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsList'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  '/models/{model}':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /models/{model}:
     get:
-      operationId: o3api.api.get_model_detail
       tags:
-        - models
+      - models
       summary: Returns detailed information about a model
       description: Detailed information about a model
-      produces:
-        - application/json
+      operationId: o3api.api.get_model_detail
       parameters:
-        - name: model
-          in: path
+      - name: model
+        in: path
+        description: model name
+        required: true
+        schema:
           type: string
-          description: model name
           default: CCMI-1_ACCESS_ACCESS-CCM-refC2
-          required: true
       responses:
-        '200':
+        200:
           description: Successfully returned model information
-          schema:
-            $ref: '#/definitions/ModelInfo'
-        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelInfo'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /models/plotstyle:
     post:
-      operationId: o3api.api.get_plot_style
       tags:
-        - models
+      - models
       summary: Returns plot styles for models
       description: Plot styles for selected models and plot type
-      produces:
-        - application/json
+      operationId: o3api.api.get_plot_style
       parameters:
-        - name: ptype
-          in: query
+      - name: ptype
+        in: query
+        description: Plot type (tco3_return, tco3_zm, vmro3_zm)
+        schema:
           type: string
-          description: 'Plot type (tco3_return, tco3_zm, vmro3_zm)'
-          required: false
-        - $ref: '#/parameters/ModelsParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ModelsParam'
       responses:
-        '200':
+        200:
           description: Successfully returned plot styles for models
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/ModelsPlotStyle'
-        '404':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelsPlotStyle'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: models
   /plots:
     get:
-      operationId: o3api.api.get_plot_types
       tags:
-        - plots
+      - plots
       summary: Returns a list of possible plots
       description: List of possible plots
-      produces:
-        - application/json
+      operationId: o3api.api.get_plot_types
       responses:
-        '200':
+        200:
           description: Successfully returned the list of possible plots
-          schema:
-            $ref: '#/definitions/PlotsList'
-        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlotsList'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /plots/tco3_zm:
     post:
-      operationId: o3api.api.plot_tco3_zm
       tags:
-        - plots
+      - plots
       summary: Builds and returns tco3_zm plot
       description: tco3_zm plot or corresponding data points
-      produces:
-        - application/pdf
-        - application/json
+      operationId: o3api.api.plot_tco3_zm
       parameters:
-        - $ref: '#/parameters/ModelsParamReq'
-        - $ref: '#/parameters/YearBeginParam'
-        - $ref: '#/parameters/YearEndParam'
-        - $ref: '#/parameters/MonthParam'
-        - $ref: '#/parameters/LatMinParam'
-        - $ref: '#/parameters/LatMaxParam'
-        - $ref: '#/parameters/RefMeasParam'
-        - $ref: '#/parameters/RefYearParam'
+        - $ref: '#/components/parameters/YearBeginParam'
+        - $ref: '#/components/parameters/YearEndParam'
+        - $ref: '#/components/parameters/MonthParam'
+        - $ref: '#/components/parameters/LatMinParam'
+        - $ref: '#/components/parameters/LatMaxParam'
+        - $ref: '#/components/parameters/RefMeasParam'
+        - $ref: '#/components/parameters/RefYearParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ModelsParamReq'
       responses:
-        '200':
+        200:
           description: Successfully created the plot
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/O3Data'
-        '404':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/O3Data'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
+          content:
+            application/pdf:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: models
   /plots/tco3_return:
     post:
-      operationId: o3api.api.plot_tco3_return
       tags:
-        - plots
+      - plots
       summary: Builds and returns tco3_return plot
       description: tco3_return plot or corresponding data points
-      produces:
-        - application/pdf
-        - application/json
+      operationId: o3api.api.plot_tco3_return
       parameters:
-        - $ref: '#/parameters/ModelsParamReq'
-        #- $ref: '#/parameters/YearBeginParam'
-        #- $ref: '#/parameters/YearEndParam'
-        - $ref: '#/parameters/MonthParam'
-        - $ref: '#/parameters/LatMinParam'
-        - $ref: '#/parameters/LatMaxParam'
-        - $ref: '#/parameters/RefMeasParam'
-        - $ref: '#/parameters/RefYearParam'
+        #- $ref: '#/components/parameters/YearBeginParam'
+        #- $ref: '#/components/parameters/YearEndParam'
+        - $ref: '#/components/parameters/MonthParam'
+        - $ref: '#/components/parameters/LatMinParam'
+        - $ref: '#/components/parameters/LatMaxParam'
+        - $ref: '#/components/parameters/RefMeasParam'
+        - $ref: '#/components/parameters/RefYearParam'
+      requestBody:
+        $ref: '#/components/requestBodies/ModelsParamReq'
       responses:
-        '200':
+        200:
           description: Successfully created a plot
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/O3Data'
-        '404':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/O3Data'
+        404:
           description: Requested resource not found
+          content: {}
         default:
           description: Unexpected error
+          content:
+            application/pdf:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: models
+components:
+  schemas:
+    ApiInfo:
+      type: object
+      properties:
+        author:
+          type: string
+        author-email:
+          type: string
+        home-page:
+          type: string
+        license:
+          type: string
+        name:
+          type: string
+        summary:
+          type: string
+        version:
+          type: string
+    DataList:
+      type: array
+      items:
+        type: string
+    ModelsList:
+      type: array
+      items:
+        type: string
+    ModelInfo:
+      type: object
+      properties:
+        model:
+          type: string
+        tco3_zm:
+          $ref: '#/components/schemas/ModelInfoObj'
+        tco3_return:
+          $ref: '#/components/schemas/ModelInfoObj'
+        vmro3_zm:
+          $ref: '#/components/schemas/ModelInfoObj'
+    ModelInfoObj:
+      type: object
+      properties:
+        data:
+          type: object
+          properties: {}
+        isdata:
+          type: boolean
+        plotstyle:
+          type: object
+          properties: {}
+    ModelsPlotStyle:
+      type: object
+      properties:
+        model:
+          type: string
+        tco3_zm:
+          $ref: '#/components/schemas/ModelsPlotStyleObj'
+        tco3_return:
+          $ref: '#/components/schemas/ModelsPlotStyleObj'
+        vmro3_zm:
+          $ref: '#/components/schemas/ModelsPlotStyleObj'
+    ModelsPlotStyleObj:
+      type: object
+      properties:
+        plotstyle:
+          type: object
+          properties: {}
+    PlotsList:
+      type: array
+      items:
+        type: string
+    O3Data:
+      type: object
+      properties:
+        legalinfo:
+          type: string
+        model:
+          type: string
+        plotstyle:
+          type: object
+          properties: {}
+        x:
+          type: array
+          items:
+            type: string
+        y:
+          type: array
+          items:
+            type: number
+#    O3PlotsJson:
+#      type: object
+#      properties:
+#        legalinfo:
+#          type: string
+#        model:
+#          type: string
+#        plotstyle:
+#          type: object
+#          properties: {}
+#        x:
+#          type: array
+#          items:
+#            type: number
+#        y:
+#          type: array
+#          items:
+#            type: number
+    Error:
+      type: string
+  parameters:
+    YearBeginParam:
+      name: begin
+      in: query
+      description: Year to start data scanning from
+      schema:
+        type: integer
+        default: 1959
+    YearEndParam:
+      name: end
+      in: query
+      description: Year to finish data scanning
+      schema:
+        type: integer
+        default: 2100
+    MonthParam:
+      name: month
+      in: query
+      description: Month(s) to select, if not a whole year
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: integer
+        default: []
+    LatMinParam:
+      name: lat_min
+      in: query
+      description: Latitude (min) to define the range (-90..90)
+      schema:
+        type: integer
+        default: -90
+    LatMaxParam:
+      name: lat_max
+      in: query
+      description: Latitude (max) to define the range (-90..90)
+      schema:
+        type: integer
+        default: 90
+    RefMeasParam:
+      name: ref_meas
+      in: query
+      description: Reference observational measurument
+      required: true
+      schema:
+        type: string
+        default: SBUV_GSFC_merged-SAT-ozone
+    RefYearParam:
+      name: ref_year
+      in: query
+      description: Reference year for the obsevational measurement
+      required: true
+      schema:
+        type: integer
+        default: 1980
+  requestBodies:
+    ModelsParam:
+      description: Name(s) of model(s) (dataset-model)
+      required: false
+      content:
+        application/json:
           schema:
-            $ref: '#/definitions/Error'
-definitions:
-  ApiInfo:
-    type: object
-    properties:
-      author:
-        type: string
-      author-email:
-        type: string
-      home-page:
-        type: string
-      license:
-        type: string
-      name:
-        type: string
-      summary:
-        type: string
-      version:
-        type: string
-  DataList:
-    type: array
-    items:
-      type: string
-  ModelsList:
-    type: array
-    items:
-      type: string
-  ModelInfo:
-    type: object
-    properties:
-      model:
-        type: string
-      tco3_zm:
-        $ref: '#/definitions/ModelInfoObj'
-      tco3_return:
-        $ref: '#/definitions/ModelInfoObj'
-      vmro3_zm:
-        $ref: '#/definitions/ModelInfoObj'
-  ModelInfoObj:
-    type: object
-    properties:
-      data:
-        type: object
-      isdata:
-        type: boolean
-      plotstyle:
-        type: object
-  ModelsPlotStyle:
-    type: object
-    properties:
-      model:
-        type: string
-      tco3_zm:
-        $ref: '#/definitions/ModelsPlotStyleObj'
-      tco3_return:
-        $ref: '#/definitions/ModelsPlotStyleObj'
-      vmro3_zm:
-        $ref: '#/definitions/ModelsPlotStyleObj'
-  ModelsPlotStyleObj:
-    type: object
-    properties:
-      plotstyle:
-        type: object
-  PlotsList:
-    type: array
-    items:
-      type: string
-  O3Data:
-    type: object
-    properties:
-      model:
-        type: string
-      plotstyle:
-        type: object
-      x:
-        type: array
-        items:
-          type: number
-      y:
-        type: array
-        items:
-          type: number
-  Error:
-    type: string
+            x-body-name: models
+            type: array
+            example:
+            - CCMI-1_ACCESS_ACCESS-CCM-refC2
+            - CCMI-1_CCCma_CMAM-refC2
+            - CCMI-1_CHASER-MIROC-ESM-refC2
+            items:
+              type: string
+    ModelsParamReq:
+      description: Name(s) of model(s) (dataset-model)
+      required: true
+      content:
+        application/json:
+          schema:
+            x-body-name: models
+            type: array
+            items:
+              type: string
+

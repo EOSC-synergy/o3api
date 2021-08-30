@@ -10,7 +10,10 @@ o3api_listen_ip = getenv('O3API_LISTEN_IP', '127.0.0.1')
 o3api_port = getenv('O3API_PORT', 5005)
 
 # Create the application instance
-app = connexion.FlaskApp(__name__, specification_dir='./')
+# disable syntaxHighlight as it slows response on large JSONs
+options = {"swagger_ui_config": {"syntaxHighlight": False}}
+app = connexion.FlaskApp(__name__, specification_dir='./',
+                         options=options)
 
 # Read the swagger.yml file to configure the endpoints
 app.add_api('swagger.yml') #, validate_responses=True)
