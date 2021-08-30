@@ -13,6 +13,7 @@ environment:
   JPL_DOCKERFORCEBUILD: "True"
   LANG: C.UTF-8
   O3API_DOCKER_TAG: "latest"
+  O3API_UPDATE_DATE: 210830_1920
 
 sqa_criteria:
   qc_style:

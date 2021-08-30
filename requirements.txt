@@ -3,7 +3,7 @@ cftime
 flask<2,>=1.0.4
 flaat
 fpdf
-gunicorn<=20.0.4
+gunicorn
 netcdf4
 xarray>=0.15.0
 numpy

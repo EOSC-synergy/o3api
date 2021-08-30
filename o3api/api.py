@@ -32,7 +32,6 @@ import logging
 import matplotlib.style as mplstyle
 mplstyle.use('fast') # faster?
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 import os
@@ -238,7 +237,7 @@ def __return_json(df, model, pfmt):
 
     data = {'model': model,
             'legalinfo': __legalinfo_link(model),
-            'x': df[model].dropna().index.tolist(),
+            'x': df[model].dropna().index.map(str).tolist(),
             'y': df[model].dropna().values.tolist(), #curve[model]
             PLOT_ST: pfmt
            }
