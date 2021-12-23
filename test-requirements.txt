@@ -11,3 +11,7 @@ testtools>=1.4.0
 pytest
 pytest-cov
 pytest-ordering
+
+# sphinx additional packages
+sphinxcontrib-openapi
+mistune==0.8.4

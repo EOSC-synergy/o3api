@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 
 project = u'o3api'
-copyright = u'2020, Karlsruhe Institute of Technology (B.Esteban, T.Kerzenmacher, V.Kozlov)'
-author = u'Karlsruhe Institute of Technology (B.Esteban, T.Kerzenmacher, V.Kozlov)'
+copyright = u'2021, Karlsruhe Institute of Technology (KIT)'
+author = u'B. Esteban, M. Hardt, T. Kerzenmacher, V. Kozlov (KIT)'
 
 # The short X.Y version
 version = u''
@@ -45,6 +45,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinxcontrib.openapi'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -186,3 +187,18 @@ epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+# A string of reStructuredText that will be included at the end of every source file that is read.
+# Add substitutions here that should be available in every file
+rst_epilog = """
+.. |br| raw:: html
+
+   <br/>
+
+.. |contact-us| replace:: `contact us <mailto:o3as-support\@lists.kit.edu>`__
+
+.. |o3api-swagger-link| replace:: `https://api.o3as.fedcloud.eu/api/v1/ui/ <https://api.o3as.fedcloud.eu/api/v1/ui/>`__
+
+.. |o3api-gitlab| replace:: `o3api GitLab repository <https://git.scc.kit.edu/synergy.o3as/o3api>`__
+
+"""

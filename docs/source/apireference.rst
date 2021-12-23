@@ -1,12 +1,12 @@
-o3api reference
-**************************
+O3API Reference
+****************
 
 .. automodule:: o3api
 
 If you are looking for information on a specific function, class or method, this part of the documentation is for you.
 
 api
-=========================
+====
 
 O3as REST API methods:
 
@@ -14,7 +14,7 @@ O3as REST API methods:
    :members:
 
 plots
-=========================
+======
 
 O3as helper classes to extact data for plotting:
 
@@ -22,7 +22,7 @@ O3as helper classes to extact data for plotting:
    :members:
 
 plothelpers
-=========================
+============
 
 O3as help functions to create figures:
 
