@@ -7,13 +7,13 @@ services:
     hostname: "o3api-testing"
     volumes:
      - type: bind
-       source: ./o3api
+       source: ./
        target: /o3api-testing
 
   o3api:
      build:
         context: "."
-        dockerfile: "./o3api/docker/Dockerfile"
+        dockerfile: "./docker/Dockerfile"
         args:
           branch: ${GIT_BRANCH}
           api_date: ${O3API_UPDATE_DATE}

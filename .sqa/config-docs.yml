@@ -1,0 +1,21 @@
+config:
+  node_agent: 'docker_compose'
+#  project_repos:
+#    o3api:
+#      repo: 'https://git.scc.kit.edu/synergy.o3as/o3api.git'
+#      branch: master
+
+environment:
+  LANG: C.UTF-8
+
+sqa_criteria:
+  qc_doc:
+    repos:
+      o3api:
+        container: o3api-testing
+        tox:
+          tox_file: /o3api-testing/tox.ini
+          testenv:
+            - doc-sphinx
+
+timeout: 900

@@ -3,28 +3,40 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-O3as REST API
-===============
+O3API Package
+==============
 
-O3as REST API provides access to O3as (Ozone assessment) data for plotting and high-level analysis. 
-The API leverages `Swagger <https://swagger.io/>`_, 
-`Flask <https://pypi.org/project/Flask/>`_, and 
-`Connexion <https://pypi.org/project/connexion/>`_.
-
+Introduction
+------------
+General information about the ``o3api`` component of the O3as service.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-   o3apirefs
+   introduction
 
-See also
-=========================================
+O3API Endpoints
+----------------
+Brief description of the API Endpoints.
+
+.. toctree::
+   :maxdepth: 2
+
+   apiendpoints
+
+O3API Reference
+---------------
+Information on a specific function, class or method of the package.
+
+.. toctree::
+   :maxdepth: 2
+
+   apireference
 
 Indices and tables
----------------------
+-------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+
 

@@ -1,8 +1,9 @@
 config:
-  project_repos:
-    o3api:
-      repo: 'https://git.scc.kit.edu/synergy.o3as/o3api.git'
-      branch: master
+  node_agent: 'docker_compose'
+#  project_repos:
+#    o3api:
+#      repo: 'https://git.scc.kit.edu/synergy.o3as/o3api.git'
+#      branch: master
   credentials:
     - id: o3as-dockerhub-vykozlov
       username_var: JPL_DOCKERUSER
@@ -12,8 +13,6 @@ environment:
   JPL_DOCKERPUSH: "o3api"
   JPL_DOCKERFORCEBUILD: "True"
   LANG: C.UTF-8
-  O3API_DOCKER_TAG: "latest"
-  O3API_UPDATE_DATE: 210830_1920
 
 sqa_criteria:
   qc_style:
@@ -49,13 +48,5 @@ sqa_criteria:
           tox_file: /o3api-testing/tox.ini
           testenv:
             - bandit
-  qc_doc:
-    repos:
-      o3api:
-        container: o3api-testing
-        tox:
-          tox_file: /o3api-testing/tox.ini
-          testenv:
-            - doc-sphinx
 
 timeout: 900
