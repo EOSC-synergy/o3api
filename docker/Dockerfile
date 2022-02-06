@@ -25,7 +25,10 @@ ARG branch=master
 
 # Install system updates and tools
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends \
+
+# use TIME arg to force rebuild from this step
+ARG api_date=none
+RUN echo ${api_date} && apt-get update && apt-get install -y --no-install-recommends \
 # Install system updates and tools
         git \
         nano \
@@ -45,9 +48,7 @@ ENV DEBIAN_FRONTEND=dialog
 WORKDIR /srv
 
 # Install user app:
-# use TIME arg to force rebuild from this step
-ARG api_date=none
-RUN echo ${api_date} && git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3api.git && \
+RUN git clone --depth 1 -b $branch https://git.scc.kit.edu/synergy.o3as/o3api.git && \
 # Install o3api
     cd o3api && \
     # force installation of pyyaml with libyaml support
