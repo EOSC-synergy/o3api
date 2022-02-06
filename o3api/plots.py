@@ -339,8 +339,11 @@ class ProcessForTCO3(DataSelection):
         :return: reference value (tco3_zm at reference year)
         """
         ref_data = self.get_raw_data_pd(self.ref_meas)
-        ref_values = ref_data[self.ref_meas][ref_data.index.year == self.ref_year].interpolate(method='linear').values
+        ref_values = ref_data[self.ref_meas][ref_data.index.year == self.ref_year].interpolate(method='linear',
+                                                                                               limit_direction='both').values
         ref_value = np.mean(ref_values)
+        logger.debug("ref_value: {} => {} => {}".format(ref_data[ref_data.index.year == self.ref_year], 
+                                                        ref_values, ref_value))
         return ref_value
 
     def get_ensemble_smoothed(self, models, smooth_win):
