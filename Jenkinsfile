@@ -20,6 +20,7 @@ pipeline {
             // Run the pipeline only if the source code is updated
             when {
                 anyOf {
+                   changeset 'docker/*'
                    changeset 'o3api/*'
                    changeset '*requirements.txt'
                    changeset 'Jenkinsfile'
