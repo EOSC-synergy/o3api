@@ -382,12 +382,22 @@ class ProcessForTCO3(DataSelection):
         :param data: data to process as pd.DataFrame
         :return: updated pd.DateFrame with stats columns 
         :rtype: pd.DataFrame
-        """        
-        data['MMMean'] = data.mean(axis=1, skipna=True)
-        data_std = data.std(axis=1, skipna=True)
+        """
+        # make data copy, as adding a new "Mean" column
+        # affects "Median" calculation, issue#52
+        data_in = data.copy(deep=True)
+        
+        # exclude also ref_measurement from the calculation of statistics
+        models = data_in.columns.to_list()
+        if self.ref_meas in models:
+            data_in.drop(self.ref_meas, axis=1, inplace=True)
+        
+        # calculate stats
+        data['MMMean'] = data_in.mean(axis=1, skipna=True)
+        data_std = data_in.std(axis=1, skipna=True)
         data['MMMean-Std'] = data['MMMean'] - data_std
         data['MMMean+Std'] = data['MMMean'] + data_std
-        data['MMMedian'] = data.median(axis=1, skipna=True) 
+        data['MMMedian'] = data_in.median(axis=1, skipna=True) 
         
         return data
 
