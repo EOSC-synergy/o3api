@@ -131,15 +131,32 @@ def _catch_error(f):
                 for key, value in e_message[0].items():
                     pdf.write(18, txt = "{} : {}".format(key, value))
                     pdf.ln()
+                    print(F"Error: {key} : {value}")
                 
-                pdf_byte_str = pdf.output(dest='S').encode('latin-1')
-                buffer_resp = BytesIO(bytes(pdf_byte_str))
+                pdf_byte_str = pdf.output(name='o3api/Error.pdf', dest='F').encode('latin-1')
+                pdf_byte_str = pdf.output(dest='S').encode('latin-1') # 'latin-1'
+                buffer_resp = BytesIO()
+                buffer_resp.write(pdf_byte_str)
+                print(pdf_byte_str)
+                print(buffer_resp)
                 buffer_resp.seek(0)
 
+                # make_response(
                 response = make_response(send_file(buffer_resp,
-                                         as_attachment=True,
-                                         attachment_filename='Error.pdf',
-                                         mimetype='application/pdf'), 500)
+                                                   as_attachment=True,
+                                                   attachment_filename='Error.pdf',
+                                                   mimetype='application/pdf'), 
+                                         200)
+                response3 = send_file(buffer_resp,
+                                     as_attachment=True,
+                                     attachment_filename='Error.pdf',
+                                     mimetype='application/pdf')
+                print(response3)
+                response4 = make_response(pdf_byte_str, 200)
+                response4.headers.set('Content-Disposition', 'attachment', filename='Error.pdf')
+                response4.headers.set('Content-Type', 'application/pdf')
+                print("===")
+                print(response)
             else:
                 response = make_response(jsonify(e_message), 500)
               

@@ -233,6 +233,7 @@ class DataSelection(Dataset):
         """
 
         # convert to pandas series to keep date information
+        # different time axes should be harmonized in o3skim..
         if (type(ds.indexes[TIME]) is 
             pd.core.indexes.datetimes.DatetimeIndex) :
             time_axis = ds.indexes[TIME].values
@@ -242,6 +243,7 @@ class DataSelection(Dataset):
         pd_model = pd.DataFrame({ model: np.nan_to_num(ds[self.plot_type]),
                                   'time': time_axis}).replace({0: np.nan})
         pd_model = pd_model.set_index('time')
+
         return pd_model
 
 
@@ -252,6 +254,10 @@ class ProcessForTCO3(DataSelection):
         super().__init__(TCO3, **kwargs)
         self.ref_meas = kwargs[api_c['ref_meas']]
         self.ref_year = kwargs[api_c['ref_year']]
+        self.ref_fillna = kwargs[api_c['ref_fillna']]
+        self.ref_value = 0
+        
+        print(F"__init__: {self.ref_meas}, {self.ref_year}, {self.ref_fillna}")
 
     def __smooth_boxcar(self, data, bwindow):
         """Function to apply boxcar, following
@@ -314,11 +320,12 @@ class ProcessForTCO3(DataSelection):
         """        
 
         data = self.get_raw_data_pd(models[0]) # initialize with first model
-        for m in models[1:]:
-            data = data.merge(self.get_raw_data_pd(m), 
-                             how='outer',
-                             on=['time'],
-                             sort=True)
+        if len(models) > 1:
+            for m in models[1:]:
+                data = data.merge(self.get_raw_data_pd(m), 
+                                  how='outer',
+                                  on=['time'],
+                                  sort=True)
 
         pd.options.display.max_columns = None
         return data
@@ -326,11 +333,20 @@ class ProcessForTCO3(DataSelection):
     def get_ensemble_yearly(self, models):
         """Rebin tco3_zm data for yearly entries
         
-        :param models: Models to process for tco3_return
+        :param models: Models to process for tco3 plots
         :return: yearly data points
         :rtype: pd.DataFrame
         """
         data = self.get_raw_ensemble_pd(models)
+
+        # try to interpolate values in the ref_meas
+        #if self.ref_meas in models and cfg.O3AS_TCO3_REF_MEAS_INTERPOLATE:
+        if self.ref_meas in models and self.ref_fillna:
+            print(F"__get_ensemble_yearly__: {self.ref_fillna}")
+            data[self.ref_meas] = data[self.ref_meas].interpolate(method='linear',
+                                                                  limit_direction='forward',
+                                                                  axis=0)
+
         return data.groupby([data.index.year]).mean()
 
     def get_ref_value(self):
@@ -338,12 +354,13 @@ class ProcessForTCO3(DataSelection):
         
         :return: reference value (tco3_zm at reference year)
         """
-        ref_data = self.get_raw_data_pd(self.ref_meas)
-        ref_values = ref_data[self.ref_meas][ref_data.index.year == self.ref_year].interpolate(method='linear',
-                                                                                               limit_direction='both').values
-        ref_value = np.mean(ref_values)
-        logger.debug("ref_value: {} => {} => {}".format(ref_data[ref_data.index.year == self.ref_year], 
-                                                        ref_values, ref_value))
+
+        # get ref_meas averaged over a year
+        ref_data = self.get_ensemble_yearly([self.ref_meas])
+        # select ref_year and find ref_value
+        ref_value = ref_data[ref_data.index == self.ref_year].iloc[0][self.ref_meas]
+        logger.debug("ref_value: {} => {}".format(ref_data, ref_value))
+
         return ref_value
 
     def get_ensemble_smoothed(self, models, smooth_win):
@@ -369,9 +386,10 @@ class ProcessForTCO3(DataSelection):
         :rtype: pd.DataFrame
         """
 
-        ref_value = self.get_ref_value()
+        # set ref_value for the plot
+        self.ref_value = self.get_ref_value()
         data_ref_year = data[data.index == self.ref_year].mean()
-        shift = ref_value - data_ref_year
+        shift = self.ref_value - data_ref_year
         data_shift = data + shift.values
         
         return data_shift
@@ -418,12 +436,11 @@ class ProcessForTCO3(DataSelection):
             data_plot[self.ref_meas] = data_ref_meas[self.ref_meas]
 
         # inject 'reference_value'
-        ref_value = self.get_ref_value()
         #ref_df = pd.DataFrame({'reference_value': [ref_value, ref_value], 
         #                       'time': [data.index[0], 
         #                                data.index[-1]]}).set_index('time')
         #data_plot = data_plot.merge(ref_df, how='outer', on=['time'], sort=True)
-        data_plot['reference_value'] = ref_value
+        data_plot['reference_value'] = self.ref_value
 
         return data_plot
 
@@ -432,6 +449,8 @@ class ProcessForTCO3Return(ProcessForTCO3):
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.ref_meas = kwargs[api_c['ref_meas']]
+        self.ref_year = kwargs[api_c['ref_year']]
         self.region = kwargs['region']
       
     def get_return_years(self, data):
@@ -441,9 +460,9 @@ class ProcessForTCO3Return(ProcessForTCO3):
         :return: return years for models
         :rtype: pd.DataFrame
         """
-        refMargin = 5
+        refMargin = cfg.O3AS_TCO3Return_REF_YEAR_MARGIN
         ref_value = self.get_ref_value()
-        #logger.debug(F"ref_value: {ref_value}")
+        logger.debug(F"{self.ref_year}: {ref_value} (ref_value)")
         def __get_return_year(data):
             # 1. search for years with tco3_zm > ref_value
             # 2. remove duplicates

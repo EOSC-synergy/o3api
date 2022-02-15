@@ -38,13 +38,20 @@ O3AS_ACKNOWLEDGMENT_URL=os.getenv('O3AS_ACKNOWLEDGMENT_URL',
 
 O3AS_MODELNAME_SPLIT='_'
 
+# minimum number of years after the Reference Year:
+O3AS_TCO3Return_REF_YEAR_MARGIN = 5
+# boxcar smoothing parameter:
 O3AS_TCO3Return_BOXCAR_WINDOW = 10
-O3AS_TCO3Return_BEGIN_YEAR=1970
+# minimum and maximum year interval for TCO3Return:
+O3AS_TCO3Return_BEGIN_YEAR=1959
 O3AS_TCO3Return_END_YEAR=2100
 
-# should become obsolete:
-O3AS_TCO3_REF_MEAS = os.getenv('O3AS_TCO3_REF_MEAS', 'SBUV_GSFC_merged-SAT-ozone')
-O3AS_TCO3_REF_YEAR = os.getenv('O3AS_TCO3_REF_YEAR', 1980)
+# experimental
+o3as_tco3_ref_meas_interpolate = os.getenv('O3AS_TCO3_REF_MEAS_INTERPOLATE', 'False')
+if o3as_tco3_ref_meas_interpolate.lower() == 'false':
+    O3AS_TCO3_REF_MEAS_INTERPOLATE = False
+if o3as_tco3_ref_meas_interpolate.lower() == 'true':
+    O3AS_TCO3_REF_MEAS_INTERPOLATE = True
 #
 
 # list of trusted OIDC providers
@@ -87,6 +94,7 @@ api_conf = {
     'lat_max': 'lat_max',
     'ref_meas': 'ref_meas',
     'ref_year': 'ref_year',
+    'ref_fillna': 'ref_fillna'
 }
 
 tco3_return_regions = {

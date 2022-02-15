@@ -1,6 +1,7 @@
 cftime
 #connexion 2.8.0 requires flask<2.0
-flask<2,>=1.0.4
+#flask<2,>=1.0.4
+flask
 flaat
 fpdf
 gunicorn
