@@ -32,7 +32,6 @@ import logging
 import matplotlib.style as mplstyle
 mplstyle.use('fast') # faster?
 import matplotlib.pyplot as plt
-import numpy as np
 
 import os
 import pkg_resources
@@ -62,12 +61,14 @@ logger = logging.getLogger('__name__') #o3api
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(cfg.log_level)
 
-## Authorization
-from flaat import Flaat
-flaat = Flaat()
+print(F"Logging level: {logging.getLevelName(logger.getEffectiveLevel())}")
 
+## Authorization
+#from flaat import Flaat
+#flaat = Flaat()
 # list of trusted OIDC providers
-flaat.set_trusted_OP_list(cfg.trusted_OP_list)
+#flaat.set_trusted_OP_list(cfg.trusted_OP_list)
+##
 
 # configuration for API
 PTYPE = cfg.api_conf['plot_t']
@@ -88,29 +89,11 @@ VMRO3 = cfg.netCDF_conf['vmro3']
 plot_c = cfg.plot_conf
 PLOT_ST = cfg.plot_conf['plot_st']
 
-def _profile(func):
-    """Decorate function for profiling
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        pr = cProfile.Profile()
-        pr.enable()
-        retval = func(*args, **kwargs)
-        pr.disable()
-        s = io.StringIO()
-        sortby = 'cumulative' #SortKey.CUMULATIVE  # 'cumulative'
-        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        ps.print_stats()
-        print(s.getvalue())
-        return retval
-
-    return wrapper
 
 def _catch_error(f):
     """Decorate function to return an error, in case
     """
-    # In general, API should return what is requested, i.e.
-    # JSON -> JSON, PDF->PDF
+    # In all cases (e.g. JSON or PDF), return JSON response
     @wraps(f)
     def wrap(*args, **kwargs):
         try:
@@ -118,65 +101,19 @@ def _catch_error(f):
         except Exception as e:
             e_message = []
             e_message.append({ 'status': 'Error',
+                               'source': f.__name__,
                                'object': str(type(e)),
-                               'message': '{}'.format(e)
+                               'message': '{}'.format(e),
+                               'media_type': request.headers['Accept']
                              })
             logger.debug(e_message)
             #raise BadRequest(e)
 
-            if request.headers['Accept'] == "application/pdf":
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", size = 14)
-                for key, value in e_message[0].items():
-                    pdf.write(18, txt = "{} : {}".format(key, value))
-                    pdf.ln()
-                    print(F"Error: {key} : {value}")
-                
-                pdf_byte_str = pdf.output(name='o3api/Error.pdf', dest='F').encode('latin-1')
-                pdf_byte_str = pdf.output(dest='S').encode('latin-1') # 'latin-1'
-                buffer_resp = BytesIO()
-                buffer_resp.write(pdf_byte_str)
-                print(pdf_byte_str)
-                print(buffer_resp)
-                buffer_resp.seek(0)
-
-                # make_response(
-                response = make_response(send_file(buffer_resp,
-                                                   as_attachment=True,
-                                                   attachment_filename='Error.pdf',
-                                                   mimetype='application/pdf'), 
-                                         200)
-                response3 = send_file(buffer_resp,
-                                     as_attachment=True,
-                                     attachment_filename='Error.pdf',
-                                     mimetype='application/pdf')
-                print(response3)
-                response4 = make_response(pdf_byte_str, 200)
-                response4.headers.set('Content-Disposition', 'attachment', filename='Error.pdf')
-                response4.headers.set('Content-Type', 'application/pdf')
-                print("===")
-                print(response)
-            else:
-                response = make_response(jsonify(e_message), 500)
+            response = make_response(jsonify(e_message), 500)
               
             logger.debug("Response: {}".format(dict(response.headers)))
             return response
 
-    return wrap
-
-
-def _timeit(func):
-    """Measure time of the function
-    """
-    @wraps(func)
-    def wrap(*args, **kwargs):
-        time_model = time.time()
-        f = func(*args, **kwargs)
-        time_described = time.time()
-        logger.info("[TIME] One model processed: {}".format(time_described - 
-                                                             time_model))
-        return f
     return wrap
 
 
@@ -562,7 +499,7 @@ def get_plot_types():
 
     return plots
 
-#@_profile
+#@o3plots._profile
 @_catch_error
 def plot_tco3_zm(*args, **kwargs):
     """Plot tco3_zm
@@ -634,6 +571,7 @@ def plot_tco3_zm(*args, **kwargs):
     logger.info(
        "[TIME] Total time from getting the request: {}".format(time.time() -
                                                                time_start))
+
     return response
 
 @_catch_error
@@ -732,6 +670,7 @@ def plot_tco3_return(*args, **kwargs):
     logger.info(
        "[TIME] Total time from getting the request: {}".format(time.time() -
                                                                time_start))
+
     return response
 
 @_catch_error
@@ -749,9 +688,7 @@ def plot_vmro3_zm(*args, **kwargs):
 
     return response
 
-#@_profile
-#@flaat.login_required() # Require only authorized people to call the function
-    
+
 def plot(data, ckwargs, **kwargs):
     """Main plotting routine
 

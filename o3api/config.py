@@ -10,12 +10,9 @@ import logging
 import os
 
 # logging level accross various scripts
-default_log_level = os.getenv('O3AS_LOG_LEVEL', 'INFO') #INFO # DEBUG # WARNING
-log_level = logging.INFO
-if default_log_level.lower() == 'debug':
-    log_level = logging.DEBUG
-if default_log_level.lower() == 'warning':
-    log_level = logging.WARNING
+# options: DEBUG(10), INFO(20), WARNING(30), ERROR(40), CRITICAL(50)
+env_log_level = os.getenv('O3AS_LOG_LEVEL', 'INFO')
+log_level = getattr(logging, env_log_level.upper(), 20) # INFO = 20
 
 # identify basedir for the package
 O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
@@ -46,13 +43,6 @@ O3AS_TCO3Return_BOXCAR_WINDOW = 10
 O3AS_TCO3Return_BEGIN_YEAR=1959
 O3AS_TCO3Return_END_YEAR=2100
 
-# experimental
-o3as_tco3_ref_meas_interpolate = os.getenv('O3AS_TCO3_REF_MEAS_INTERPOLATE', 'False')
-if o3as_tco3_ref_meas_interpolate.lower() == 'false':
-    O3AS_TCO3_REF_MEAS_INTERPOLATE = False
-if o3as_tco3_ref_meas_interpolate.lower() == 'true':
-    O3AS_TCO3_REF_MEAS_INTERPOLATE = True
-#
 
 # list of trusted OIDC providers
 trusted_OP_list = [

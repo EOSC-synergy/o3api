@@ -21,6 +21,7 @@ import xarray as xr
 import cProfile
 import io
 import pstats
+import time
 from functools import wraps
 
 logger = logging.getLogger('__name__') #o3api
@@ -55,6 +56,19 @@ def _profile(func):
 
     return wrapper
 
+def _timeit(func):
+    """Measure time of the function
+    """
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        time_model = time.time()
+        f = func(*args, **kwargs)
+        time_described = time.time()
+        time_diff = time_described - time_model
+        print(F"[TIME] Function {func.__name__} needed: {time_diff}")
+        return f
+    return wrap
+
 
 class Dataset:
     """Base Class to initialize the dataset
@@ -81,6 +95,7 @@ class Dataset:
         self._datafiles = glob.glob(os.path.join(cfg.O3AS_DATA_BASEPATH, 
                                                  model, 
                                                  self._data_pattern))
+
     def get_dataset(self, model):
         """Load data from one datafile
 
@@ -92,8 +107,11 @@ class Dataset:
         self.__set_datafiles(model)
         ds = xr.open_dataset(self._datafiles[0], 
                              cache=True,
-                             decode_cf=False) # decode_cf=False #faster?
+                             decode_cf=False,  # decode_cf=False #faster?
+                             decode_times=True # gives a bit of gain in speed?
+                            )
         ds = xr.decode_cf(ds)
+
         return ds
         
     def get_mfdataset(self, model):
@@ -116,11 +134,13 @@ class Dataset:
             ds = xr.open_mfdataset(self._datafiles, 
                                    chunks={LAT: chunk_size },
                                    concat_dim=TIME,
+                                   combine='nested',
                                    data_vars='minimal', coords='minimal',
                                    parallel=False)
         else:
             ds = xr.open_mfdataset(self._datafiles,
                                    concat_dim=TIME,
+                                   combine='nested',
                                    data_vars='minimal',
                                    coords='minimal',
                                    parallel=False) #False
@@ -167,7 +187,7 @@ class DataSelection(Dataset):
 
         return lat_a, lat_b
 
-        
+       
     def get_dataslice(self, model):
         """Function to select the slice of data according 
         to the time and latitude requested
@@ -178,7 +198,6 @@ class DataSelection(Dataset):
         """
         ds = super().get_dataset(model)
         logger.debug(F"{model}: Dataset is loaded from the storage location")
-        logger.debug(ds)
         
         # check in what order latitude is used, return them correspondently
         lat_a, lat_b = self.__check_latitude_order(ds)
@@ -238,10 +257,12 @@ class DataSelection(Dataset):
             pd.core.indexes.datetimes.DatetimeIndex) :
             time_axis = ds.indexes[TIME].values
         else:
+            # convert CFTimeIndex to pd.DatetimeIndex, turn Warnings Off (unsafe=True)
             time_axis = ds.indexes[TIME].to_datetimeindex()
 
         pd_model = pd.DataFrame({ model: np.nan_to_num(ds[self.plot_type]),
                                   'time': time_axis}).replace({0: np.nan})
+        # set index to 'time', also important for performance pd.join() (?)
         pd_model = pd_model.set_index('time')
 
         return pd_model
@@ -255,9 +276,7 @@ class ProcessForTCO3(DataSelection):
         self.ref_meas = kwargs[api_c['ref_meas']]
         self.ref_year = kwargs[api_c['ref_year']]
         self.ref_fillna = kwargs[api_c['ref_fillna']]
-        self.ref_value = 0
-        
-        print(F"__init__: {self.ref_meas}, {self.ref_year}, {self.ref_fillna}")
+        self.ref_value, self.ref_data = self.get_ref_value()
 
     def __smooth_boxcar(self, data, bwindow):
         """Function to apply boxcar, following
@@ -310,7 +329,8 @@ class ProcessForTCO3(DataSelection):
 
         data = self.to_pd_dataframe(ds_tco3, model)
         return data
-    
+
+    #@_profile   
     def get_raw_ensemble_pd(self, models):
         """Build the ensemble of tco3_zm models
 
@@ -321,32 +341,35 @@ class ProcessForTCO3(DataSelection):
 
         data = self.get_raw_data_pd(models[0]) # initialize with first model
         if len(models) > 1:
-            for m in models[1:]:
-                data = data.merge(self.get_raw_data_pd(m), 
-                                  how='outer',
-                                  on=['time'],
-                                  sort=True)
+            # PERFORMANCE! important to use map() here
+            data_list = map(self.get_raw_data_pd, models[1:])
+            data = data.join(data_list)
+            ## previous method uses merge
+            # for m in models[1:]:
+            #    data = data.merge(self.get_raw_data_pd(m), 
+            #                      how='outer',
+            #                      on=['time'])
+            ##
 
-        pd.options.display.max_columns = None
-        return data
+        return data.sort_index()
 
     def get_ensemble_yearly(self, models):
-        """Rebin tco3_zm data for yearly entries
+        """Rebin tco3_zm data for yearly entries:
+            (0). optionally interpolate missing values in the reference measurement
+            1. group by year
+            2. average by applying pd.mean()
         
         :param models: Models to process for tco3 plots
-        :return: yearly data points
+        :return: yearly averaged data points
         :rtype: pd.DataFrame
         """
         data = self.get_raw_ensemble_pd(models)
 
         # try to interpolate values in the ref_meas
-        #if self.ref_meas in models and cfg.O3AS_TCO3_REF_MEAS_INTERPOLATE:
         if self.ref_meas in models and self.ref_fillna:
-            print(F"__get_ensemble_yearly__: {self.ref_fillna}")
             data[self.ref_meas] = data[self.ref_meas].interpolate(method='linear',
                                                                   limit_direction='forward',
                                                                   axis=0)
-
         return data.groupby([data.index.year]).mean()
 
     def get_ref_value(self):
@@ -361,7 +384,7 @@ class ProcessForTCO3(DataSelection):
         ref_value = ref_data[ref_data.index == self.ref_year].iloc[0][self.ref_meas]
         logger.debug("ref_value: {} => {}".format(ref_data, ref_value))
 
-        return ref_value
+        return ref_value, ref_data
 
     def get_ensemble_smoothed(self, models, smooth_win):
         """Smooth tco3_zm data using boxcar
@@ -386,8 +409,6 @@ class ProcessForTCO3(DataSelection):
         :rtype: pd.DataFrame
         """
 
-        # set ref_value for the plot
-        self.ref_value = self.get_ref_value()
         data_ref_year = data[data.index == self.ref_year].mean()
         shift = self.ref_value - data_ref_year
         data_shift = data + shift.values
@@ -432,14 +453,9 @@ class ProcessForTCO3(DataSelection):
         data_plot = self.get_ensemble_stats(data_shift)
 
         if self.ref_meas in models:
-            data_ref_meas = self.get_ensemble_yearly([self.ref_meas])
-            data_plot[self.ref_meas] = data_ref_meas[self.ref_meas]
+            data_plot[self.ref_meas] = self.ref_data
 
         # inject 'reference_value'
-        #ref_df = pd.DataFrame({'reference_value': [ref_value, ref_value], 
-        #                       'time': [data.index[0], 
-        #                                data.index[-1]]}).set_index('time')
-        #data_plot = data_plot.merge(ref_df, how='outer', on=['time'], sort=True)
         data_plot['reference_value'] = self.ref_value
 
         return data_plot
@@ -449,8 +465,6 @@ class ProcessForTCO3Return(ProcessForTCO3):
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.ref_meas = kwargs[api_c['ref_meas']]
-        self.ref_year = kwargs[api_c['ref_year']]
         self.region = kwargs['region']
       
     def get_return_years(self, data):
@@ -461,13 +475,12 @@ class ProcessForTCO3Return(ProcessForTCO3):
         :rtype: pd.DataFrame
         """
         refMargin = cfg.O3AS_TCO3Return_REF_YEAR_MARGIN
-        ref_value = self.get_ref_value()
-        logger.debug(F"{self.ref_year}: {ref_value} (ref_value)")
+        logger.debug(F"{self.ref_year}: {self.ref_value} (ref_value)")
         def __get_return_year(data):
             # 1. search for years with tco3_zm > ref_value
             # 2. remove duplicates
             # 3. only two rows will be left (False, True)
-            data_return = (data[data.index>(self.ref_year+refMargin)]>ref_value).drop_duplicates()
+            data_return = (data[data.index>(self.ref_year+refMargin)]>self.ref_value).drop_duplicates()
             try:
                 idx = data_return.values.tolist().index(True)
                 return_year = data_return.index[idx]
