@@ -12,7 +12,7 @@ info:
   license:
     name: Licensed under GPLv3
     url: https://git.scc.kit.edu/synergy.o3as/o3api/-/raw/master/LICENSE
-  version: 0.7.3
+  version: 0.7.4
 servers:
 - url: /api/v1
 paths:
@@ -261,6 +261,7 @@ paths:
         - $ref: '#/components/parameters/LatMaxParam'
         - $ref: '#/components/parameters/RefMeasParam'
         - $ref: '#/components/parameters/RefYearParam'
+        - $ref: '#/components/parameters/RefFillNAParam'
       requestBody:
         $ref: '#/components/requestBodies/ModelsParamReq'
       responses:
@@ -304,6 +305,7 @@ paths:
         - $ref: '#/components/parameters/LatMaxParam'
         - $ref: '#/components/parameters/RefMeasParam'
         - $ref: '#/components/parameters/RefYearParam'
+        - $ref: '#/components/parameters/RefFillNAParam'
       requestBody:
         $ref: '#/components/requestBodies/ModelsParamReq'
       responses:
@@ -496,6 +498,13 @@ components:
       schema:
         type: integer
         default: 1980
+    RefFillNAParam:
+      name: ref_fillna
+      in: query
+      description: Select 'true' to linearly interpolate missing values in the reference measurement
+      schema:
+        type: boolean
+        default: false
   requestBodies:
     ModelsParam:
       description: Name(s) of model(s) (dataset-model)
