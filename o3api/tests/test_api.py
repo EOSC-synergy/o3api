@@ -42,6 +42,8 @@ LAT_MIN = 'lat_min'
 LAT_MAX = 'lat_max'
 REF_MEAS = 'ref_meas'
 REF_YEAR = 'ref_year'
+REF_FILLNA = 'ref_fillna'
+
 
 class TestAPIMethods(unittest.TestCase):
 
@@ -54,13 +56,11 @@ class TestAPIMethods(unittest.TestCase):
         self.client = app.app.test_client()
         self.headers = {'Content-Type': 'application/json',
                         'Accept': 'application/json'}
-                        
+
         self.models = ['test-o3api', 'test-o3api-2', 'test-o3api-3']
         self.ref_meas = 'test-ref-model'
         self.ref_year = 1980
         cfg.O3AS_DATA_BASEPATH = "tmp/data"
-        cfg.O3AS_TCO3_REF_MEAS = self.ref_meas
-        cfg.O3AS_TCO3_REF_YEAR = self.ref_year
 
         begin_year = 1970
         end_year = begin_year + 70 # default boxcar is 10(years), range>boxcar
@@ -80,7 +80,8 @@ class TestAPIMethods(unittest.TestCase):
                                   LAT_MIN: '-10',
                                   LAT_MAX: '10',
                                   REF_MEAS: self.ref_meas,
-                                  REF_YEAR: str(self.ref_year)
+                                  REF_YEAR: str(self.ref_year),
+                                  REF_FILLNA: 'true'
                                 }
         request_q = ''.join([key + "=" + val + "&" 
                              for key,val in plots_tco3_query_dict.items()])
@@ -127,7 +128,7 @@ class TestAPIMethods(unittest.TestCase):
         logger.debug(F"[API] models = {models.data}")
         logger.debug(F"[API] type(models.data) = {type(models.data)}")
         self.assertEqual(200, models.status_code)
-        
+
     #def test_api_models_list(self):
     #    request_j = { 'select': '' }
     #    request_q = ''.join([key + "=" + val + "&" for key,val in request_j.items()])
