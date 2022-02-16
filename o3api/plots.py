@@ -306,18 +306,20 @@ class DataSelection(Dataset):
         :param models: Models to process for tco3_zm
         :return: ensemble of models as pd.DataFrame
         :rtype: pd.DataFrame
-        """        
+        """
 
         data = self.get_raw_data_pd(models[0]) # initialize with first model
         if len(models) > 1:
-            # PERFORMANCE? map() and join should be faster than 'for' and merge
+            ## PERFORMANCE? map() and join should be faster than 'for' and merge
+            # how="outer" is important in order to keep all indecies/dates
             data_list = map(self.get_raw_data_pd, models[1:])
-            data = data.join(data_list)
+            data = data.join(data_list, how="outer")
+
             ## previous method uses merge
-            # for m in models[1:]:
-            #    data = data.merge(self.get_raw_data_pd(m), 
-            #                      how='outer',
-            #                      on=['time'])
+            #for m in models[1:]:
+            #   data = data.merge(self.get_raw_data_pd(m), 
+            #                     how='outer',
+            #                     on=['time'])
             ##
 
         return data.sort_index()
@@ -396,8 +398,12 @@ class ProcessForTCO3(DataSelection):
         :rtype: pd.DataFrame
         """        
         data = self.get_ensemble_yearly(models)
-        last_year = data.index.values[-1]
+        # ToDo: check for a better method. Now works if NaN years < smooth_win
+        # if first years have NaNs fill them with "before NaN values"
+        first_year = data.index.values[0]
+        data[data.index < (first_year + smooth_win)] = data[data.index < (first_year + smooth_win)].fillna(method='bfill')
         # if last years have NaNs fill them with "before NaN values"
+        last_year = data.index.values[-1]
         data[data.index > (last_year - smooth_win)] = data[data.index > (last_year - smooth_win)].fillna(method='ffill')
         data = data.apply(self.__smooth_boxcar, args = [smooth_win], axis = 0, result_type = 'broadcast')
         
