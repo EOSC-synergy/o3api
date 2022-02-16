@@ -46,6 +46,7 @@ LAT_MIN = 'lat_min'
 LAT_MAX = 'lat_max'
 REF_MEAS = 'ref_meas'
 REF_YEAR = 'ref_year'
+REF_FILLNA = 'ref_fillna'
 
 @pytest.mark.run(order=1)
 class TestPackageMethods(unittest.TestCase):
@@ -88,8 +89,6 @@ class TestPackageMethods(unittest.TestCase):
         data_base_path = 'tmp/data'
         ptype = TCO3
         cfg.O3AS_DATA_BASEPATH = data_base_path
-        cfg.O3AS_TCO3_REF_MEAS = self.ref_meas
-        cfg.O3AS_TCO3_REF_YEAR = self.ref_year
 
         self.fake_email = 'no-reply@fakeaddress.domain'
 
@@ -175,7 +174,8 @@ class TestPackageMethods(unittest.TestCase):
             LAT_MIN: -10,
             LAT_MAX: 10,
             REF_MEAS: self.ref_meas,
-            REF_YEAR: self.ref_year
+            REF_YEAR: self.ref_year,
+            REF_FILLNA: True
         }
 
         logger.info(F"kwargs: {self.kwargs}")
@@ -199,7 +199,9 @@ class TestPackageMethods(unittest.TestCase):
                               'full_year' + '_' +
                               str(self.kwargs[LAT_MIN]) + '_' +
                               str(self.kwargs[LAT_MAX]) + '_' +
-                              self.ref_meas + '_' + str(self.ref_year))
+                              str(self.kwargs[REF_MEAS]) + '_' + 
+                              str(self.kwargs[REF_YEAR]) + '_' +
+                              str(self.kwargs[REF_FILLNA]))
 
 
     def test_metadata_type(self):
@@ -325,7 +327,7 @@ class TestPackageMethods(unittest.TestCase):
         """
         Test that get_ref_value() is correct
         """
-        ref_value = self.data.get_ref_value()
+        ref_value, __ = self.data.get_ref_value()
         logger.info(F"ref_value: {ref_value}")
         self.assertTrue(ref_value == 0.5)
 

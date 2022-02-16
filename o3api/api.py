@@ -45,9 +45,6 @@ try:
 except ImportError:
     from yaml import Loader, SafeLoader, Dumper
 
-import cProfile
-import io
-import pstats
 
 from flask import send_file
 from flask import jsonify, make_response, request
@@ -61,7 +58,6 @@ logger = logging.getLogger('__name__') #o3api
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(cfg.log_level)
 
-print(F"Logging level: {logging.getLevelName(logger.getEffectiveLevel())}")
 
 ## Authorization
 #from flaat import Flaat
@@ -80,6 +76,7 @@ LAT_MIN = cfg.api_conf['lat_min']
 LAT_MAX = cfg.api_conf['lat_max']
 REF_MEAS = cfg.api_conf['ref_meas']
 REF_YEAR = cfg.api_conf['ref_year']
+REF_FILLNA = cfg.api_conf['ref_fillna']
 
 TCO3 = cfg.netCDF_conf['tco3']
 TCO3Return = cfg.netCDF_conf['tco3_r']
@@ -256,12 +253,10 @@ def get_data_tco3_zm(*args, **kwargs):
     :return: JSON document with data points
     """
     kwargs[PTYPE] = TCO3
-    kwargs[REF_MEAS] = cfg.O3AS_TCO3_REF_MEAS
-    kwargs[REF_YEAR] = cfg.O3AS_TCO3_REF_YEAR
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
     models = kwargs[MODELS]
   
-    data = o3plots.ProcessForTCO3(**kwargs)
+    data = o3plots.DataSelection(TCO3, **kwargs)
     tco3_data = data.get_raw_ensemble_pd(models)
 
     models_style = get_plot_style(**kwargs)
@@ -285,12 +280,11 @@ def get_data_tco3_return(*args, **kwargs):
     :return: JSON document with data points
     """
     kwargs[PTYPE] = TCO3Return
-    kwargs[REF_MEAS] = cfg.O3AS_TCO3_REF_MEAS
-    kwargs[REF_YEAR] = cfg.O3AS_TCO3_REF_YEAR
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
     models = kwargs[MODELS]
   
-    data = o3plots.ProcessForTCO3(**kwargs)
+    # TCO3Return => TCO3
+    data = o3plots.DataSelection(TCO3, **kwargs)
     tco3_data = data.get_raw_ensemble_pd(models)
 
     models_style = get_plot_style(**kwargs)
@@ -796,4 +790,4 @@ def plot_json(data, ckwargs, **kwargs):
     __json_append = json_output.append
     [ __json_append(__return_json(data, m, ckwargs[m])) for m in models ]
         
-    return json_output  
+    return json_output

@@ -81,7 +81,7 @@ class Dataset:
         self.plot_type = plot_type
         self._data_pattern = self.plot_type + "*.nc"
         # tco3_return uses the same data as tco3_zm :
-        if plot_type == "tco3_return":
+        if plot_type == TCO3Return:
             self._data_pattern = "tco3*.nc"
         self._datafiles = [] #None
 
@@ -268,6 +268,61 @@ class DataSelection(Dataset):
         return pd_model
 
 
+    def get_raw_data(self, model):
+        """Process the model to get tco3_zm raw data
+
+        :param model: The model to process for tco3_zm
+        :return: raw data points in preparation for plotting
+        :rtype: pandas series (pd.Series)        
+        """
+        # data selection according to time and latitude
+        ds_slice = self.get_dataslice(model)
+        ds_tco3 = ds_slice[[TCO3]].mean(dim=[LAT])
+        logger.debug("ds_tco3: {}".format(ds_tco3))
+
+        data = self.to_pd_series(ds_tco3, model)
+
+        return data
+
+    def get_raw_data_pd(self, model):
+        """Process the model to get tco3_zm raw data
+
+        :param model: The model to process for tco3_zm
+        :return: raw data points in preparation for plotting
+        :rtype: pd.DataFrame
+        """
+        # data selection according to time and latitude
+        ds_slice = self.get_dataslice(model)
+        ds_tco3 = ds_slice[[TCO3]].mean(dim=[LAT])
+        logger.debug("ds_tco3: {}".format(ds_tco3))
+
+        data = self.to_pd_dataframe(ds_tco3, model)
+        return data
+
+    #@_profile   
+    def get_raw_ensemble_pd(self, models):
+        """Build the ensemble of tco3_zm models
+
+        :param models: Models to process for tco3_zm
+        :return: ensemble of models as pd.DataFrame
+        :rtype: pd.DataFrame
+        """        
+
+        data = self.get_raw_data_pd(models[0]) # initialize with first model
+        if len(models) > 1:
+            # PERFORMANCE? map() and join should be faster than 'for' and merge
+            data_list = map(self.get_raw_data_pd, models[1:])
+            data = data.join(data_list)
+            ## previous method uses merge
+            # for m in models[1:]:
+            #    data = data.merge(self.get_raw_data_pd(m), 
+            #                      how='outer',
+            #                      on=['time'])
+            ##
+
+        return data.sort_index()
+
+
 class ProcessForTCO3(DataSelection):
     """Subclass of :class:`DataSelection` to calculate tco3_zm
     """
@@ -298,60 +353,7 @@ class ProcessForTCO3(DataSelection):
         logger.debug("Signal+boxcar (len={}): {}".format(len(boxcar_values), 
                                             boxcar_values))
         return boxcar_values[bwindow-1:-(bwindow-1)]
-        
-    def get_raw_data(self, model):
-        """Process the model to get tco3_zm raw data
 
-        :param model: The model to process for tco3_zm
-        :return: raw data points in preparation for plotting
-        :rtype: pandas series (pd.Series)        
-        """
-        # data selection according to time and latitude
-        ds_slice = super().get_dataslice(model)
-        ds_tco3 = ds_slice[[TCO3]].mean(dim=[LAT])
-        logger.debug("ds_tco3: {}".format(ds_tco3))
-
-        data = self.to_pd_series(ds_tco3, model)
-
-        return data
-
-    def get_raw_data_pd(self, model):
-        """Process the model to get tco3_zm raw data
-
-        :param model: The model to process for tco3_zm
-        :return: raw data points in preparation for plotting
-        :rtype: pd.DataFrame
-        """
-        # data selection according to time and latitude
-        ds_slice = super().get_dataslice(model)
-        ds_tco3 = ds_slice[[TCO3]].mean(dim=[LAT])
-        logger.debug("ds_tco3: {}".format(ds_tco3))
-
-        data = self.to_pd_dataframe(ds_tco3, model)
-        return data
-
-    #@_profile   
-    def get_raw_ensemble_pd(self, models):
-        """Build the ensemble of tco3_zm models
-
-        :param models: Models to process for tco3_zm
-        :return: ensemble of models as pd.DataFrame
-        :rtype: pd.DataFrame
-        """        
-
-        data = self.get_raw_data_pd(models[0]) # initialize with first model
-        if len(models) > 1:
-            # PERFORMANCE! important to use map() here
-            data_list = map(self.get_raw_data_pd, models[1:])
-            data = data.join(data_list)
-            ## previous method uses merge
-            # for m in models[1:]:
-            #    data = data.merge(self.get_raw_data_pd(m), 
-            #                      how='outer',
-            #                      on=['time'])
-            ##
-
-        return data.sort_index()
 
     def get_ensemble_yearly(self, models):
         """Rebin tco3_zm data for yearly entries:
@@ -363,14 +365,14 @@ class ProcessForTCO3(DataSelection):
         :return: yearly averaged data points
         :rtype: pd.DataFrame
         """
-        data = self.get_raw_ensemble_pd(models)
+        data = super().get_raw_ensemble_pd(models)
 
         # try to interpolate values in the ref_meas
         if self.ref_meas in models and self.ref_fillna:
             data[self.ref_meas] = data[self.ref_meas].interpolate(method='linear',
                                                                   limit_direction='forward',
                                                                   axis=0)
-        return data.groupby([data.index.year]).mean()
+        return data.groupby([data.index.year], dropna=True).mean()
 
     def get_ref_value(self):
         """Get reference value for the reference year
@@ -508,9 +510,9 @@ class ProcessForTCO3Return(ProcessForTCO3):
         """  
 
         boxcar_win = cfg.O3AS_TCO3Return_BOXCAR_WINDOW
-        data = self.get_ensemble_smoothed(models, boxcar_win)
-        data_shift = self.get_ensemble_shifted(data)
-        data_tco3 = self.get_ensemble_stats(data_shift)
+        data = super().get_ensemble_smoothed(models, boxcar_win)
+        data_shift = super().get_ensemble_shifted(data)
+        data_tco3 = super().get_ensemble_stats(data_shift)
         data_return_years = self.get_return_years(data_tco3)
 
         return data_return_years
