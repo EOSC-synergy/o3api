@@ -1,0 +1,10 @@
+services:
+  processing:
+    command: sleep 6000000
+    image: indigodatacloud/ci-images:python3.6
+    volumes:
+    - source: ./
+      target: /sqaaas-build
+      type: bind
+    working_dir: /sqaaas-build
+version: '3.7'
