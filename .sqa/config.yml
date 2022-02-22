@@ -1,0 +1,25 @@
+config:
+  credentials: []
+  project_repos: {}
+environment:
+  JPL_DOCKERFORCEBUILD: enabled
+sqa_criteria:
+  QC.Fun:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e cobertura
+        container: processing
+  QC.Sec:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e badnit
+        container: processing
+  QC.Sty:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e pep8
+        container: processing
+timeout: 600
