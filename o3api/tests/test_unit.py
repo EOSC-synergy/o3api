@@ -122,7 +122,7 @@ class TestPackageMethods(unittest.TestCase):
 
         with open(os.path.join(ref_dir, 'metadata.yaml'), 'w') as file:
             yaml.dump(self.metayaml, file, default_flow_style=False)
-            
+
         ### function to emulate monthly data with noise:
         def __tco3_one(months):
             noise = np.random.normal(0, .125, months)
@@ -159,7 +159,7 @@ class TestPackageMethods(unittest.TestCase):
             os.makedirs(test_dir, exist_ok=True)
             self.o3ds.to_netcdf(test_path)
             self.o3ds.close()
-        
+
             with open(os.path.join(test_dir, 'metadata.yaml'), 'w') as file:
                 yaml.dump(self.metayaml, file)
 
