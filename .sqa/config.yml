@@ -1,0 +1,28 @@
+config:
+  credentials: []
+  project_repos:
+    github.com/EOSC-synergy/sqaaas-tooling:
+      branch: main
+      repo: https://github.com/EOSC-synergy/sqaaas-tooling
+environment:
+  JPL_DOCKERFORCEBUILD: enabled
+sqa_criteria:
+  QC.Fun:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e func-api
+        container: qc.fun_lanky-copper-tortoise
+  QC.Sty:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e pep8
+        container: qc.sty_scummy-gold-moose
+  QC.Uni:
+    repos:
+      this_repo:
+        commands:
+        - tox -c tox.ini -e unittest
+        container: qc.uni_cheeky-olive-cockroach
+timeout: 600
