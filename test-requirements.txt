@@ -12,6 +12,9 @@ pytest
 pytest-cov
 pytest-ordering
 
+markupsafe==2.0.1 # check: https://github.com/aws/aws-sam-cli/issues/3661
+#pympler
+
 # sphinx additional packages
 sphinxcontrib-openapi
 mistune==0.8.4

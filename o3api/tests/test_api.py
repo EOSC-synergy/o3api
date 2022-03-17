@@ -8,20 +8,19 @@
 Created on Tue December 8 13:47:51 2020
 @author: vykozlov
 """
+
 import logging
-import numpy as np
 import os
-import pytest
+
 import unittest
 from o3api import api as o3api
 from o3api import config as cfg
-
-import flask
+from o3api import load as o3load
 import connexion
 import json
 
 # conigure python logge
-logger = logging.getLogger('__name__') #o3api
+logger = logging.getLogger('__name__')
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(logging.DEBUG)
 
@@ -44,23 +43,33 @@ REF_MEAS = 'ref_meas'
 REF_YEAR = 'ref_year'
 REF_FILLNA = 'ref_fillna'
 
+cfg.O3AS_DATA_BASEPATH = "tmp/data"
+
 
 class TestAPIMethods(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         specification_path = os.path.join(cfg.O3API_BASE_DIR, "o3api")
         app = connexion.FlaskApp(__name__, 
                                  specification_dir=specification_path)
         # Read the swagger.yml file to configure the endpoints
         app.add_api('swagger.yml')
-        self.client = app.app.test_client()
-        self.headers = {'Content-Type': 'application/json',
+        
+        cls.client = app.app.test_client()
+
+        # dictionary to load O3as data in memory (in o3api!)
+        o3api.o3data = {
+                'tco3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
+                                           "tco3_zm").load_dataset_ensemble()
+        }
+
+        cls.headers = {'Content-Type': 'application/json',
                         'Accept': 'application/json'}
 
-        self.models = ['test-o3api', 'test-o3api-2', 'test-o3api-3']
-        self.ref_meas = 'test-ref-model'
-        self.ref_year = 1980
-        cfg.O3AS_DATA_BASEPATH = "tmp/data"
+        cls.models = ['test-o3api', 'test-o3api-2', 'test-o3api-3']
+        cls.ref_meas = 'test-ref-model'
+        cls.ref_year = 1980
 
         begin_year = 1970
         end_year = begin_year + 70 # default boxcar is 10(years), range>boxcar
@@ -72,20 +81,20 @@ class TestAPIMethods(unittest.TestCase):
                                }
         request_q = ''.join([key + "=" + val + "&" 
                              for key,val in data_tco3_query_dict.items()])
-        self.data_tco3_request_q = request_q[:-1] + ''
+        cls.data_tco3_request_q = request_q[:-1] + ''
 
-        self.tco3_body = list(self.models)
+        cls.tco3_body = list(cls.models)
         plots_tco3_query_dict = { BEGIN: str(begin_year), 
                                   END:   str(end_year),
                                   LAT_MIN: '-10',
                                   LAT_MAX: '10',
-                                  REF_MEAS: self.ref_meas,
-                                  REF_YEAR: str(self.ref_year),
+                                  REF_MEAS: cls.ref_meas,
+                                  REF_YEAR: str(cls.ref_year),
                                   REF_FILLNA: 'true'
                                 }
         request_q = ''.join([key + "=" + val + "&" 
                              for key,val in plots_tco3_query_dict.items()])
-        self.plots_tco3_request_q = request_q[:-1] + ''
+        cls.plots_tco3_request_q = request_q[:-1] + ''
 
 
     def test_api_info(self):
@@ -175,6 +184,7 @@ class TestAPIMethods(unittest.TestCase):
         logger.debug(F"[API] plot_return.data: {plot.data}")
         logger.debug(F"[API] plot_return.content_type: {plot.content_type}")
         self.assertEqual(200, plot.status_code)
+
 
 if __name__ == '__main__':
     unittest.main()
