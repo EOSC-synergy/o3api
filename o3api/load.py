@@ -17,7 +17,9 @@ import io
 import pstats
 from functools import wraps
 
-from pympler import asizeof
+# to check size of data in the memory
+# https://github.com/pympler/pympler
+#from pympler import asizeof
 
 logger = logging.getLogger('__name__') #o3api
 logger.setLevel(cfg.log_level)
@@ -55,15 +57,16 @@ def _profile(func):
 
     return wrapper
 
-class LoadDataset:
+class LoadData:
     """Base Class to initialize the dataset
 
     :param plot_type: The plot type (e.g. tco3_zm, tco3_return, vmro3_zm, ...)
     """
 
-    def __init__ (self, plot_type):
+    def __init__ (self, data_basepath, plot_type):
         """Constructor method
         """
+        self.data_basepath = data_basepath
         self.plot_type = plot_type
         self._data_pattern = self.plot_type + "*.nc"
         # tco3_return uses the same data as tco3_zm :
@@ -77,7 +80,7 @@ class LoadDataset:
            Scans all directories in the O3AS_DATA_BASEPATH.
         """
 
-        self._datafile_paths = glob.glob(os.path.join(cfg.O3AS_DATA_BASEPATH,
+        self._datafile_paths = glob.glob(os.path.join(self.data_basepath,
                                                       '**', 
                                                       self._data_pattern))
         self._datafile_paths.sort()
@@ -93,6 +96,11 @@ class LoadDataset:
                              cache=True,  # True
                              decode_cf=False) # decode_cf=False #faster?
         ds = xr.decode_cf(ds)
+        # we are using monthly data, with the 'middle' date,
+        # in this case converting with align_on='date' will not miss dates
+        # see https://xarray.pydata.org/en/stable/generated/xarray.Dataset.convert_calendar.html
+        ds = ds.convert_calendar('standard', TIME, align_on='date', use_cftime=False)
+
         return ds
     
     def load_dataset_ensemble(self):
@@ -115,26 +123,25 @@ class LoadDataset:
             ds_ensemble[model] = self.load_dataset(mp)
             # immediately load it in memory
             ds_ensemble[model].load()
+            
+        print(F"Loaded {len(ds_ensemble)} {self.plot_type} (zonal mean) models")
 
         return ds_ensemble
 
 
 # initialize an empty dictionary
-data = {}
+#data = {}
+#tco3_zm = LoadDataset("tco3_zm")
+#data["tco3_zm"] = tco3_zm.load_dataset_ensemble()
+#vmro3_zm = LoadDataset("vmro3_zm")
+#data["vmro3_zm"] = vmro3_zm.load_dataset_ensemble()
 
-tco3_zm = LoadDataset("tco3_zm")
-data["tco3_zm"] = tco3_zm.load_dataset_ensemble()
+#print("Memory, tco3_zm:", asizeof.asizeof(data["tco3_zm"]))
+#print(F"Loaded {len(data['tco3_zm'])} TCO3 (zonal mean) models")
 
-vmro3_zm = LoadDataset("vmro3_zm")
-data["vmro3_zm"] = vmro3_zm.load_dataset_ensemble()
+#print("Memory, vmro3_zm:", asizeof.asizeof(data["vmro3_zm"]))
+#print(F"Loaded {len(data['vmro3_zm'])} VMRO3 (zonal mean) models")
 
-print("Memory, tco3_zm:", asizeof.asizeof(data["tco3_zm"]))
-print(F"Loaded {len(data['tco3_zm'])} TCO3 (zonal mean) models")
-
-print("Memory, vmro3_zm:", asizeof.asizeof(data["vmro3_zm"]))
-print(F"Loaded {len(data['vmro3_zm'])} VMRO3 (zonal mean) models")
-
-print(data["tco3_zm"]["CCMI-1_ACCESS_ACCESS-CCM-refC2"])
-print(data["tco3_zm"]["SBUV_GSFC_merged-SAT-ozone"])
-
-print(data["vmro3_zm"])
+#print(data["tco3_zm"]["CCMI-1_ACCESS_ACCESS-CCM-refC2"])
+#print(data["tco3_zm"]["SBUV_GSFC_merged-SAT-ozone"])
+#print(data["vmro3_zm"])

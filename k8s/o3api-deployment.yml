@@ -54,6 +54,8 @@ spec:
           value: "600"
         - name: O3API_WORKERS
           value: "2"
+#        - name: HDF5_USE_FILE_LOCKING
+#          value: 'FALSE'          
         volumeMounts:
         - mountPath: /mnt/o3as-data
           name: nfs-o3as-data

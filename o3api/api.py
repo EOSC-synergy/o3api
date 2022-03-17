@@ -26,12 +26,17 @@
 
 
 import o3api.config as cfg
+import o3api.debug as dbg
+import o3api.load as o3load
 import o3api.plothelpers as phlp
-import o3api.plots as o3plots
+import o3api.prepare as o3prepare
+import o3api.tco3_zm as tco3zm
 import logging
 import matplotlib.style as mplstyle
 mplstyle.use('fast') # faster?
 import matplotlib.pyplot as plt
+from multiprocessing import Pool
+from functools import partial
 
 import os
 import pkg_resources
@@ -54,7 +59,7 @@ from io import BytesIO
 from PyPDF3 import PdfFileMerger
 
 # conigure python logger
-logger = logging.getLogger('__name__') #o3api
+logger = logging.getLogger('__name__')
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(cfg.log_level)
 
@@ -86,6 +91,14 @@ VMRO3 = cfg.netCDF_conf['vmro3']
 plot_c = cfg.plot_conf
 PLOT_ST = cfg.plot_conf['plot_st']
 
+# dictionary to load O3as data in memory
+o3data = {
+        'tco3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
+                                   "tco3_zm").load_dataset_ensemble(),
+        'vmro3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
+                                    "vmro3_zm").load_dataset_ensemble()
+        }
+
 
 def _catch_error(f):
     """Decorate function to return an error, in case
@@ -112,7 +125,6 @@ def _catch_error(f):
             return response
 
     return wrap
-
 
 def __convert_plot_style(models_style, ptype):
     """Function to convert array of dictionaries with model:name to 
@@ -256,7 +268,7 @@ def get_data_tco3_zm(*args, **kwargs):
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
     models = kwargs[MODELS]
   
-    data = o3plots.DataSelection(TCO3, **kwargs)
+    data = o3prepare.PrepareData(o3data['tco3_zm'], **kwargs)
     tco3_data = data.get_raw_ensemble_pd(models)
 
     models_style = get_plot_style(**kwargs)
@@ -279,14 +291,15 @@ def get_data_tco3_return(*args, **kwargs):
     :param kwargs: provided in the API call parameters
     :return: JSON document with data points
     """
-    kwargs[PTYPE] = TCO3Return
+    kwargs[PTYPE] = TCO3 #Return
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
     models = kwargs[MODELS]
   
     # TCO3Return => TCO3
-    data = o3plots.DataSelection(TCO3, **kwargs)
+    data = o3prepare.PrepareData(o3data['tco3_zm'], **kwargs)
     tco3_data = data.get_raw_ensemble_pd(models)
 
+    kwargs[PTYPE] = TCO3Return
     models_style = get_plot_style(**kwargs)
     ckwargs = __convert_plot_style(models_style, TCO3Return)
 
@@ -477,10 +490,11 @@ def get_model_detail(*args, **kwargs):
     plot_types = get_data_types()
     for pt in plot_types:
         if model_info_dict[pt]['isdata']:
-            # create dataset according to the plot type (tco3_zm, vmro3_zm, etc)
-            data = o3plots.Dataset(pt, **kwargs)
-            ds = data.get_dataset(model)
+            kwargs[PTYPE] = pt
+            # retrieve dataset according to the plot type (tco3_zm, vmro3_zm, etc)
+            ds = o3data[pt][model] if pt is not TCO3Return else o3data[TCO3][model]
             model_info_dict[pt]['original_metadata'] = ds.to_dict(data=False)
+            #print("model_info:", model_info_dict[pt]['original_metadata'])
             model_info_dict[pt]['original_metadata']['attrs']  = (
             __dict_remove_elems(model_info_dict[pt]['original_metadata']['attrs']))
     
@@ -493,7 +507,7 @@ def get_plot_types():
 
     return plots
 
-#@o3plots._profile
+#@dbg._profile
 @_catch_error
 def plot_tco3_zm(*args, **kwargs):
     """Plot tco3_zm
@@ -551,7 +565,7 @@ def plot_tco3_zm(*args, **kwargs):
         if model != kwargs[REF_MEAS]:
             ckwargs[model]['marker'] = ''
 
-    data = o3plots.ProcessForTCO3(**kwargs)
+    data = tco3zm.ProcessForTCO3Zm(o3data['tco3_zm'], **kwargs)
     plot_data = data.get_ensemble_for_plot(kwargs[MODELS])
 
     logger.info(
@@ -567,6 +581,18 @@ def plot_tco3_zm(*args, **kwargs):
                                                                time_start))
 
     return response
+
+def __fill_default_region(region, **kwargs):
+    kwargs['region'] = region
+    region_params = cfg.tco3_return_regions[region]
+    kwargs.update(region_params)
+    if MONTH not in region_params.keys():
+        kwargs[MONTH] = ''
+    data = tco3zm.ProcessForTCO3ZmReturn(o3data['tco3_zm'], **kwargs)
+    data_return = data.get_ensemble_for_plot(kwargs[MODELS])
+    logger.debug(F"{region} processed")
+
+    return data_return
 
 @_catch_error
 def plot_tco3_return(*args, **kwargs):
@@ -588,16 +614,29 @@ def plot_tco3_return(*args, **kwargs):
     # initialize an empty pd.DataFrame
     plot_data = pd.DataFrame()
     # First draw pre-defined regions
-    for r,p in cfg.tco3_return_regions.items():
-        kwargs['region'] = r
-        kwargs.update(p)
-        #kwargs['lat_min'] = p['lat_min'] 
-        #kwargs['lat_max'] = p['lat_max']
-        if MONTH not in p.keys():
-            kwargs[MONTH] = ''
-        data = o3plots.ProcessForTCO3Return(**kwargs)
-        data_return = data.get_ensemble_for_plot(kwargs[MODELS])
-        plot_data = plot_data.append(data_return)
+    #for r,p in cfg.tco3_return_regions.items():
+    #    kwargs['region'] = r
+    #    kwargs.update(p)
+    #    #kwargs['lat_min'] = p['lat_min'] 
+    #    #kwargs['lat_max'] = p['lat_max']
+    #    if MONTH not in p.keys():
+    #        kwargs[MONTH] = ''
+    #    data = o3plots.ProcessForTCO3Return(o3data['tco3_zm'], **kwargs)
+    #    data_return = data.get_ensemble_for_plot(kwargs[MODELS])
+    #    plot_data = plot_data.append(data_return)
+
+    
+    plot_data_list = []
+    default_regions = list(cfg.tco3_return_regions.keys())
+
+    # Process default regions in parallel
+    # Pool.map results are ordered (according to the input)!
+    with Pool() as pool:
+        plot_data_list = pool.map(partial(__fill_default_region, **kwargs),
+                                      default_regions)
+
+    for plot_region in plot_data_list:
+        plot_data = plot_data.append(plot_region)
 
     # Then draw the user-defined region
     kwargs['region'] = 'User region'
@@ -605,7 +644,7 @@ def plot_tco3_return(*args, **kwargs):
     kwargs[LAT_MIN] = user_lat_min
     kwargs[LAT_MAX] = user_lat_max
     #('User region (' + str(kwargs['lat_min']) + ', ' + str(kwargs['lat_max']) + ')')
-    data = o3plots.ProcessForTCO3Return(**kwargs)
+    data = tco3zm.ProcessForTCO3ZmReturn(o3data['tco3_zm'], **kwargs)
     plot_data = plot_data.append(data.get_ensemble_for_plot(kwargs[MODELS]))
 
     # define plot styling for the mean

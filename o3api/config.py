@@ -96,6 +96,20 @@ tco3_return_regions = {
     'Near global': {'lat_min': -60, 'lat_max': 60, 'month': ''},
     'Global': {'lat_min': -90, 'lat_max': 90, 'month': ''},
 }
+
+###
+# avoid updating months, comment for now
+#tco3_return_regions = {
+#    'SH Polar': {'lat_min': -90, 'lat_max': -60},
+#    'SH mid-lat': {'lat_min': -60, 'lat_max': -35},
+#    'Tropics': {'lat_min': -20, 'lat_max': 20},
+#    'NH mid-lat': {'lat_min': 35, 'lat_max': 60},
+#    'NH Polar': {'lat_min': 60, 'lat_max': 90},
+#    'Near global': {'lat_min': -60, 'lat_max': 60},
+#    'Global': {'lat_min': -90, 'lat_max': 90},
+#}
+###
+
 # configuration for plotting
 # ToDo: use file?
 plot_conf = {
