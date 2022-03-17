@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   o3api-testing:
-    image: "indigodatacloud/ci-images:python3.6"
+    image: "o3as/ci-images:u20-py38"
     container_name: "o3api-testing"
     hostname: "o3api-testing"
     volumes:
