@@ -1,0 +1,21 @@
+# Dockerfile for the CI/CD pipeline
+
+FROM ubuntu:20.04
+
+# Install system updates and tools
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system updates and tools
+        git \
+        python3-setuptools \
+        python3-pip \
+        python3-wheel \
+        tox && \
+# Clean up & back to dialog front end
+    apt-get autoremove -y && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=dialog
+
+CMD ["tail","-f","/dev/null"]
