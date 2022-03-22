@@ -25,6 +25,8 @@ pipeline {
                    changeset 'o3api/*'
                    changeset '*requirements.txt'
                    changeset 'Jenkinsfile'
+                   triggeredBy 'TimerTrigger'
+                   triggeredBy cause: 'UserIdCause'
                 }
             }
             steps {
@@ -51,6 +53,8 @@ pipeline {
                    changeset 'o3api/*'
                    changeset '*requirements.txt'
                    changeset 'Jenkinsfile'
+                   triggeredBy 'TimerTrigger'
+                   triggeredBy cause: 'UserIdCause'
                 }
             }
             steps {
