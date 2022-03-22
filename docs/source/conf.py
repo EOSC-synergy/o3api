@@ -23,10 +23,10 @@ project = u'o3api'
 copyright = u'2021, Karlsruhe Institute of Technology (KIT)'
 author = u'B. Esteban, M. Hardt, T. Kerzenmacher, V. Kozlov (KIT)'
 
-# The short X.Y version
-version = u''
-# The full version, including alpha/beta/rc tags
-release = u'0.1.0'
+## The short X.Y version
+#version = u''
+## The full version, including alpha/beta/rc tags
+#release = u'0.1.0'
 
 
 # -- General configuration ---------------------------------------------------

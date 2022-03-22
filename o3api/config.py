@@ -87,27 +87,27 @@ api_conf = {
     'ref_fillna': 'ref_fillna'
 }
 
-tco3_return_regions = {
-    'Antarctic(Oct)': {'lat_min': -90, 'lat_max': -60, 'month': [10]},
-    'SH mid-lat': {'lat_min': -60, 'lat_max': -35, 'month': ''},
-    'Tropics': {'lat_min': -20, 'lat_max': 20, 'month': ''},
-    'NH mid-lat': {'lat_min': 35, 'lat_max': 60, 'month': ''},
-    'Arctic(Mar)': {'lat_min': 60, 'lat_max': 90, 'month': [3]},
-    'Near global': {'lat_min': -60, 'lat_max': 60, 'month': ''},
-    'Global': {'lat_min': -90, 'lat_max': 90, 'month': ''},
-}
+#tco3_return_regions = {
+#    'Antarctic(Oct)': {'lat_min': -90, 'lat_max': -60, 'month': [10]},
+#    'SH mid-lat': {'lat_min': -60, 'lat_max': -35, 'month': ''},
+#    'Tropics': {'lat_min': -20, 'lat_max': 20, 'month': ''},
+#    'NH mid-lat': {'lat_min': 35, 'lat_max': 60, 'month': ''},
+#    'Arctic(Mar)': {'lat_min': 60, 'lat_max': 90, 'month': [3]},
+#    'Near global': {'lat_min': -60, 'lat_max': 60, 'month': ''},
+#    'Global': {'lat_min': -90, 'lat_max': 90, 'month': ''},
+#}
 
 ###
 # avoid updating months, comment for now
-#tco3_return_regions = {
-#    'SH Polar': {'lat_min': -90, 'lat_max': -60},
-#    'SH mid-lat': {'lat_min': -60, 'lat_max': -35},
-#    'Tropics': {'lat_min': -20, 'lat_max': 20},
-#    'NH mid-lat': {'lat_min': 35, 'lat_max': 60},
-#    'NH Polar': {'lat_min': 60, 'lat_max': 90},
-#    'Near global': {'lat_min': -60, 'lat_max': 60},
-#    'Global': {'lat_min': -90, 'lat_max': 90},
-#}
+tco3_return_regions = {
+    'SH Polar': {'lat_min': -90, 'lat_max': -60},
+    'SH mid-lat': {'lat_min': -60, 'lat_max': -35},
+    'Tropics': {'lat_min': -20, 'lat_max': 20},
+    'NH mid-lat': {'lat_min': 35, 'lat_max': 60},
+    'NH Polar': {'lat_min': 60, 'lat_max': 90},
+    'Near global': {'lat_min': -60, 'lat_max': 60},
+    'Global': {'lat_min': -90, 'lat_max': 90},
+}
 ###
 
 # configuration for plotting
