@@ -13,7 +13,7 @@ if [[ -z "${O3API_TIMEOUT}" ]]; then
 fi
 
 if [[ -z "${O3API_WORKERS}" ]]; then
-    export O3API_WORKERS=2
+    export O3API_WORKERS=1
 fi
 
 if [ "${ENABLE_HTTPS}" == "True" ]; then

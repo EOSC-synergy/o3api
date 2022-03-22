@@ -53,7 +53,7 @@ spec:
         - name: O3API_TIMEOUT
           value: "600"
         - name: O3API_WORKERS
-          value: "2"
+          value: "1"
 #        - name: HDF5_USE_FILE_LOCKING
 #          value: 'FALSE'          
         volumeMounts:
