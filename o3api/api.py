@@ -586,8 +586,6 @@ def __fill_default_region(region, **kwargs):
     kwargs['region'] = region
     region_params = cfg.tco3_return_regions[region]
     kwargs.update(region_params)
-    if MONTH not in region_params.keys():
-        kwargs[MONTH] = ''
     data = tco3zm.ProcessForTCO3ZmReturn(o3data['tco3_zm'], **kwargs)
     data_return = data.get_ensemble_for_plot(kwargs[MODELS])
     logger.debug(F"{region} processed")
