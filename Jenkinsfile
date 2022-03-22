@@ -9,8 +9,9 @@ pipeline {
 
     environment {
         sqa_config_docs = ".sqa/config-docs.yml"
-        // set the tag, if master=>"latest", otherwise "BRANCH_NAME"
-        O3API_DOCKER_TAG = "${env.BRANCH_NAME == 'master' ? "latest" : env.BRANCH_NAME}"        
+        // set the tag, if "master" => based on the py package version, otherwise "BRANCH_NAME"
+        PY_PACKAGE_VERSION = sh (returnStdout: true, script: 'python3 ./setup.py --version').trim()
+        O3API_DOCKER_TAG = "${env.BRANCH_NAME == 'master' ? env.PY_PACKAGE_VERSION : env.BRANCH_NAME}"      
         // get the current date
         O3API_UPDATE_DATE = sh (returnStdout: true, script: 'date +%y%m%d_%H%M%S').trim()
     }
@@ -29,7 +30,7 @@ pipeline {
             steps {
                 script {
                     // update config.yml for Jenkins_ID
-                    sh "bash .sqa/update-config-yml"
+                    //sh "bash .sqa/update-config-yml"
                     echo env.O3API_DOCKER_TAG
                     echo env.O3API_UPDATE_DATE
                     projectConfig = pipelineConfig()
