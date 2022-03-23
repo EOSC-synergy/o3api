@@ -35,6 +35,7 @@ import logging
 import matplotlib.style as mplstyle
 mplstyle.use('fast') # faster?
 import matplotlib.pyplot as plt
+import numpy as np
 from multiprocessing import Pool
 from functools import partial
 
@@ -200,11 +201,13 @@ def __return_json(df, model, pfmt):
 
     data = {'model': model,
             'legalinfo': __legalinfo_link(model),
-            'x': df[model].dropna().index.map(str).tolist(),
-            'y': df[model].dropna().values.tolist(), #curve[model]
+            'x': df[model].index.map(str).tolist(),
+             # np.nan replaced with None (null) to always show all "x"s
+            'y': df[model].replace({np.nan: None}).values.tolist(),  #.dropna()
             PLOT_ST: pfmt
            }
-    return data  
+
+    return data
 
 
 @_catch_error
