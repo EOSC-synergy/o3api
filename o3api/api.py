@@ -24,39 +24,32 @@
 # ToDo: improve Error handling, that Errors are correctly returned by API
 #       e.g. raise OSError("no files to open")
 
-
+### o3as related imports
 import o3api.config as cfg
-import o3api.debug as dbg
+#import o3api.debug as dbg
 import o3api.load as o3load
 import o3api.plothelpers as phlp
 import o3api.prepare as o3prepare
 import o3api.tco3_zm as tco3zm
+from o3api.loadmeta import o3metadata
+
+### general imports
 import logging
+import matplotlib.pyplot as plt
 import matplotlib.style as mplstyle
 mplstyle.use('fast') # faster?
-import matplotlib.pyplot as plt
 import numpy as np
-from multiprocessing import Pool
-from functools import partial
-
 import os
-import pkg_resources
 import pandas as pd
+import pkg_resources
 import re
 import time
-import yaml
-# try to loader faster CLoader, if not fall into standard Loader
-try:
-    from yaml import CLoader as Loader, CSafeLoader as SafeLoader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, SafeLoader, Dumper
 
-
-from flask import send_file
-from flask import jsonify, make_response, request
+from flask import jsonify, make_response, request, send_file
 from fpdf import FPDF, HTMLMixin
-from functools import wraps
+from functools import partial, wraps
 from io import BytesIO
+from multiprocessing import Pool
 from PyPDF3 import PdfFileMerger
 
 # conigure python logger
@@ -99,7 +92,6 @@ o3data = {
         'vmro3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
                                     "vmro3_zm").load_dataset_ensemble()
         }
-
 
 def _catch_error(f):
     """Decorate function to return an error, in case
@@ -342,14 +334,20 @@ def get_models_info():
     markers = [".", "o", "+", "x", "v", "^", "s", "*", "D"]
 
     m_counter = 0
-    list_dir = os.listdir(cfg.O3AS_DATA_BASEPATH)
+    list_dir_all = os.listdir(cfg.O3AS_DATA_BASEPATH)
+    # take only directory names, avoid file names
+    list_dir = filter(lambda mdir: os.path.isdir(os.path.join(cfg.O3AS_DATA_BASEPATH,
+                                                              mdir)), 
+                      list_dir_all)
+    list_dir = list(list_dir)
     list_dir.sort()
-    for mdir in list_dir:
-        m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, mdir)
+
+    for model in list_dir:
+        m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, model)
         m_files = os.listdir(m_path)
         if (os.path.isdir(m_path)) and any(".nc" in f for f in m_files):
-            meta = { 'model' : mdir,
-                     'legalinfo': __legalinfo_link(mdir),
+            meta = { 'model' : model,
+                     'legalinfo': __legalinfo_link(model),
                      TCO3: {
                           "isdata": False,
                           PLOT_ST: {
@@ -385,35 +383,32 @@ def get_models_info():
                 i_style = m_counter % len(line_styles)
                 meta[pt][PLOT_ST]["linestyle"] = line_styles[i_style]
 
-            # update with the info from metadata.yaml's
-            if "metadata.yaml" in m_files:
-                # update meta from metadata.yaml, if available:
-                with open(os.path.join(m_path, "metadata.yaml"), "r") as stream:
-                    meta_yaml = yaml.load(stream, Loader=SafeLoader)
-
-                # if plot info is in meta_yaml, update it in meta
+            # update with the info from metadata variable
+            if model in o3metadata.keys():
+                # if plot info is in metadata, update it in meta
                 for pt in plot_types:
-                    if PLOT_ST in meta_yaml[pt].keys():
-                        meta[pt][PLOT_ST].update(meta_yaml[pt][PLOT_ST])
+                    if PLOT_ST in o3metadata[model][pt].keys():
+                        meta[pt][PLOT_ST].update(o3metadata[model][pt][PLOT_ST])
+                logger.debug(F"o3metadata[{model}]: {o3metadata[model]}")
                 # if colors are defined for TCO3 and not others, use the same
-                if PLOT_ST in meta_yaml[TCO3].keys():
-                    if PLOT_ST not in meta_yaml[TCO3Return].keys():
+                if PLOT_ST in o3metadata[model][TCO3].keys():
+                    if PLOT_ST not in o3metadata[model][TCO3Return].keys():
                         meta[TCO3Return][PLOT_ST].update(meta[TCO3][PLOT_ST])
-                    if PLOT_ST not in meta_yaml[VMRO3].keys():
+                    if PLOT_ST not in o3metadata[model][VMRO3].keys():
                         meta[VMRO3][PLOT_ST].update(meta[TCO3][PLOT_ST])
 
-            # get model attrs. comment. another endpoint?
-            #data = o3plots.Dataset(TCO3, **kwargs)
-            #ds = data.get_dataset(mdir)
-            #model_info_dict = ds.to_dict(data=False)
-            #meta['attrs'] = model_info_dict['attrs']
+            # check for the data in directory, if there => isdata=True
+            # doing it "live", not via initially loaded o3metadata
+            try:
+                for f in os.listdir(m_path):
+                    if "tco3" in f:
+                        meta[TCO3]['isdata'] = True
+                        meta[TCO3Return]['isdata'] = True
+                    if "vmro3" in f:
+                        meta[VMRO3]['isdata'] = True
+            except FileNotFoundError:
+                logger.info(F"Model path {m_path} not found")
 
-            for f in os.listdir(m_path):
-                if "tco3" in f:
-                    meta[TCO3]['isdata'] = True
-                    meta[TCO3Return]['isdata'] = True
-                if "vmro3" in f:
-                    meta[VMRO3]['isdata'] = True
             models.append(meta)
             m_counter += 1
 
@@ -497,7 +492,7 @@ def get_model_detail(*args, **kwargs):
             # retrieve dataset according to the plot type (tco3_zm, vmro3_zm, etc)
             ds = o3data[pt][model] if pt is not TCO3Return else o3data[TCO3][model]
             model_info_dict[pt]['original_metadata'] = ds.to_dict(data=False)
-            #print("model_info:", model_info_dict[pt]['original_metadata'])
+            #logger.debug("model_info:", model_info_dict[pt]['original_metadata'])
             model_info_dict[pt]['original_metadata']['attrs']  = (
             __dict_remove_elems(model_info_dict[pt]['original_metadata']['attrs']))
     

@@ -1,0 +1,4 @@
+source,model,parameter,Conventions,plot_color,plot_linestyle,plot_marker
+test,test-o3api,tco3_zm,CF-1.4,black,solid,o
+test,test-o3api-2,tco3_zm,CF-1.4,black,solid,o
+test,test-o3api-3,tco3_zm,CF-1.4,black,solid,o
