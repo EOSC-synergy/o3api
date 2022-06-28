@@ -1,3 +1,24 @@
+#########
+# for local tests:
+# 1. build test container, from the o3api source directory:
+# docker-compose -f .sqa/docker-compose.yml --project-directory $PWD up --build -d o3api-testing
+#
+# 2. then run tests as below (See also difinitions in this file)
+# docker-compose -f .sqa/docker-compose.yml --project-directory $PWD \
+# exec -T -e JPL_DOCKERUSER -e JPL_DOCKERPASS o3api-testing tox -c /o3api-testing/tox.ini -e pep8
+#
+# docker-compose -f .sqa/docker-compose.yml --project-directory $PWD \
+# exec -T -e JPL_DOCKERUSER -e JPL_DOCKERPASS o3api-testing tox -c /o3api-testing/tox.ini -e unittest
+#
+# docker-compose -f .sqa/docker-compose.yml --project-directory $PWD \
+# exec -T -e JPL_DOCKERUSER -e JPL_DOCKERPASS o3api-testing tox -c /o3api-testing/tox.ini -e func-api
+#
+# docker-compose -f .sqa/docker-compose.yml --project-directory $PWD \
+# exec -T -e JPL_DOCKERUSER -e JPL_DOCKERPASS o3api-testing tox -c /o3api-testing/tox.ini -e cobertura
+#
+# docker-compose -f .sqa/docker-compose.yml --project-directory $PWD \
+# exec -T -e JPL_DOCKERUSER -e JPL_DOCKERPASS o3api-testing tox -c /o3api-testing/tox.ini -e bandit
+
 config:
   node_agent: 'docker_compose'
 #  project_repos:

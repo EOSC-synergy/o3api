@@ -1,7 +1,7 @@
 cftime
 #connexion 2.8.0 requires flask<2.0
 flask<2,>=1.0.4
-flaat
+#flaat
 fpdf
 gunicorn
 netcdf4
@@ -18,3 +18,4 @@ scipy>=1.4.1
 statsmodels
 connexion[swagger-ui]
 dask[delayed]
+werkzeug==2.0.3

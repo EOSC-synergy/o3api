@@ -22,6 +22,12 @@ O3API_BASE_DIR = os.path.dirname(os.path.normpath(os.path.dirname(__file__)))
 # But one can change using environment $O3AS_DATA_BASEPATH
 O3AS_DATA_BASEPATH = os.getenv('O3AS_DATA_BASEPATH', '/srv/o3api/data/')
 
+# Where to find the "Data sources - Sources.csv" file
+O3AS_DATA_SOURCES_CSV = os.getenv('O3AS_DATA_SOURCES_CSV',
+                                  os.path.join(O3AS_DATA_BASEPATH,
+                                               'Data sources - Sources.csv'))
+
+# Web link to the main website
 O3AS_MAIN_URL=os.getenv('O3AS_MAIN_URL', 'https://o3as.data.kit.edu')
 
 O3AS_LEGALINFO_TXT=('By using our service you agree to the Terms of Use:')
@@ -45,24 +51,16 @@ O3AS_TCO3Return_END_YEAR=2100
 
 
 # list of trusted OIDC providers
+# future feature: use FLAAT for authentication
 trusted_OP_list = [
-'https://b2access.eudat.eu/oauth2/',
-'https://b2access-integration.fz-juelich.de/oauth2',
 'https://unity.helmholtz-data-federation.de/oauth2/',
 'https://login.helmholtz-data-federation.de/oauth2/',
 'https://login-dev.helmholtz.de/oauth2/',
 'https://login.helmholtz.de/oauth2/',
-'https://unity.eudat-aai.fz-juelich.de/oauth2/',
-'https://services.humanbrainproject.eu/oidc/',
 'https://accounts.google.com/',
 'https://aai.egi.eu/oidc/',
 'https://aai-dev.egi.eu/oidc/',
-'https://login.elixir-czech.org/oidc/',
-'https://iam-test.indigo-datacloud.eu/',
-'https://iam.deep-hybrid-datacloud.eu/',
-'https://iam.extreme-datacloud.eu/',
-'https://oidc.scc.kit.edu/auth/realms/kit/',
-'https://proxy.demo.eduteams.org'
+'https://iam.deep-hybrid-datacloud.eu/'
 ]
 
 # netCDF variable names and coodrinates

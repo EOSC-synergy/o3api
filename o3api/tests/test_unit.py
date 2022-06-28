@@ -17,8 +17,8 @@ import xarray as xr
 import yaml
 import unittest
 
-from o3api import api as o3api
 from o3api import config as cfg
+from o3api import api as o3api
 from o3api import load as o3load
 from o3api import prepare as o3prepare
 from o3api import tco3_zm as tco3zm
@@ -95,16 +95,17 @@ class TestPackageMethods(unittest.TestCase):
         cls.fake_email = 'no-reply@fakeaddress.domain'
 
         # metadata
-        cls.metayaml = {TCO3: {'plotstyle': { 'color': 'black',
-                                               'marker': 'o',
-                                               'linestyle': 'solid' }},
-                         TCO3Return: {'plotstyle': { 'color': 'black',
-                                                     'marker': 'o',
-                                                     'linestyle': 'solid' }},
-                         VMRO3: {'plotstyle': { 'color': 'black',
-                                                'marker': 'o',
-                                                'linestyle': 'solid' }}
-                        }
+        cls.o3meta = {
+                      TCO3: {'plotstyle': { 'color': 'black',
+                                            'marker': 'o',
+                                            'linestyle': 'solid' }},
+                      TCO3Return: {'plotstyle': { 'color': 'black',
+                                                  'marker': 'o',
+                                                  'linestyle': 'solid' }},
+                      VMRO3: {'plotstyle': { 'color': 'black',
+                                             'marker': 'o',
+                                             'linestyle': 'solid' }}
+                     }
 
         ### dummy reference dataset, monthly data
         cls.o3ds_ref = xr.Dataset(
@@ -122,8 +123,13 @@ class TestPackageMethods(unittest.TestCase):
         cls.o3ds_ref.to_netcdf(ref_path)
         cls.o3ds_ref.close()
 
-        with open(os.path.join(ref_dir, 'metadata.yaml'), 'w') as file:
-            yaml.dump(cls.metayaml, file, default_flow_style=False)
+        with open(cfg.O3AS_DATA_SOURCES_CSV, 'w') as file:
+            file.write("source,model,parameter,Conventions,plot_color,plot_linestyle,plot_marker\n")
+            for model in cls.models:
+                color = cls.o3meta[ptype]['plotstyle']['color']
+                linestyle = cls.o3meta[ptype]['plotstyle']['linestyle']
+                marker = cls.o3meta[ptype]['plotstyle']['marker']
+                file.write(F"test,{model},{ptype},CF-1.4,{color},{linestyle},{marker}\n")
             
         ### function to emulate monthly data with noise:
         def __tco3_one(months):
@@ -161,9 +167,6 @@ class TestPackageMethods(unittest.TestCase):
             os.makedirs(test_dir, exist_ok=True)
             cls.o3ds.to_netcdf(test_path)
             cls.o3ds.close()
-        
-            with open(os.path.join(test_dir, 'metadata.yaml'), 'w') as file:
-                yaml.dump(cls.metayaml, file)
 
         #time.sleep(1) # wait untin file is written?
 
