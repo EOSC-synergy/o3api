@@ -9,7 +9,7 @@
 import logging
 import numpy as np
 import o3api.config as cfg
-import o3api.debug as dbg
+#import o3api.debug as dbg
 from o3api.prepare import PrepareData
 import pandas as pd
 from scipy import signal
@@ -46,19 +46,27 @@ class ProcessForTCO3Zm(PrepareData):
         """        
         boxcar = np.ones(bwindow)
         logger.debug("signal(raw) (len={}): {}".format(len(data),data))
-        # may have a problem with NaNs. try to interpolate. somehow does not work... comment.
-        # https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array?noredirect=1&lq=1
-        #nans, x= np.isnan(data), lambda z: z.nonzero()[0]
-        #data[nans]= np.interp(x(nans), x(~nans), data[~nans])
+        # 1. select data slice with valid data, i.e. avoid NaNs at start & end
+        # 2. if there are NaN _within_ the data range, interpolate
+        # 3. apply boxcar smoothing on this data slice
+        # 4. update original data with smoothed values
+        first_idx = data.first_valid_index()
+        last_idx = data.last_valid_index()
+        data_smooth = data.loc[first_idx:last_idx]
+        data_smooth = data_smooth.interpolate()
+        logger.debug("signal(for smoothing) (len={}): {}".format(len(data_smooth),data_smooth))
         # mirror start and end of the original signal:
-        sgnl = np.r_[data[bwindow-1:0:-1],data,data[-2:-bwindow-1:-1]]
+        sgnl = np.r_[data_smooth[bwindow-1:0:-1],data_smooth,data_smooth[-2:-bwindow-1:-1]]
         logger.debug("Signal (len={}): {}".format(len(sgnl),sgnl))
         boxcar_values = signal.convolve(sgnl,
                                         boxcar, 
                                         mode='same')/bwindow
         logger.debug("Signal+boxcar (len={}): {}".format(len(boxcar_values), 
                                             boxcar_values))
-        return boxcar_values[bwindow-1:-(bwindow-1)]
+        data_out = data
+        data_out.loc[first_idx:last_idx] = boxcar_values[bwindow-1:-(bwindow-1)]
+
+        return data_out
 
 
     def get_ensemble_yearly(self, models) -> pd.DataFrame:
@@ -107,18 +115,14 @@ class ProcessForTCO3Zm(PrepareData):
         :rtype: pd.DataFrame
         """        
         data = self.get_ensemble_yearly(models)
-        # ToDo: check for a better method. Now works if NaN years < smooth_win
-        # if first years have NaNs fill them with "before NaN values"
-        first_year = data.index.values[0]
-        data[data.index < (first_year + smooth_win)] = data[data.index < (first_year + smooth_win)].fillna(method='bfill')
-        # if last years have NaNs fill them with "before NaN values"
-        last_year = data.index.values[-1]
-        data[data.index > (last_year - smooth_win)] = data[data.index > (last_year - smooth_win)].fillna(method='ffill')
+        # NB: __smooth_boxcar smooths data only with valid values, 
+        # i.e. we avoid NaNs at beginning and end of dataframe
+        # see __smooth_boxcar() for details
         data = data.apply(self.__smooth_boxcar, 
-                                   args = [smooth_win], 
-                                   axis = 0,
-                                   result_type = 'broadcast'
-                                   )
+                          args = [smooth_win], 
+                          axis = 0,
+                          result_type = 'broadcast'
+                         )
         
         return data
 
@@ -132,9 +136,16 @@ class ProcessForTCO3Zm(PrepareData):
 
         data_ref_year = data[data.index == self.ref_year].mean()
         shift = self.ref_value - data_ref_year
-        data_shift = data + shift.values
-        
-        return data_shift
+        # in the case of no data at ref_year, "shift" contains NaNs
+        # Option 1:
+        # => replace NaNs with "0.", i.e. do NOT apply shift!
+        #shift = shift.fillna(0.)
+        # Option 2: -> taken
+        # do nothing, then data_shifted is filled with NaNs as shift is NaN
+        data_shifted = data + shift.values
+        logger.debug("data_shifted: {} ".format(data_shifted))
+
+        return data_shifted
         
     def get_ensemble_stats(self, data) -> pd.DataFrame:
         """Calculate Mean, Std, Median for tco3_zm data
