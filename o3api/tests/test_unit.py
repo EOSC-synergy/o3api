@@ -14,7 +14,6 @@ import os
 import pandas as pd
 import pytest
 import xarray as xr
-import yaml
 import unittest
 
 from o3api import config as cfg

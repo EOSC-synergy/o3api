@@ -30,6 +30,7 @@ pipeline {
                 }
             }
             steps {
+                sleep(time:12,unit:"SECONDS")
                 script {
                     // update config.yml for Jenkins_ID
                     //sh "bash .sqa/update-config-yml"
