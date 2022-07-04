@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Feb 13 16:29:07 2022
+#
+# Copyright (c) 2019 - 2022 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+# This code is distributed under the MIT License
+# Please, see the LICENSE file
+#
+# @author: vykozlov
 
-@author: valentin
+"""
+Module containing the LoadData class to initialize datasets and load them in-memory
 """
 
 import glob

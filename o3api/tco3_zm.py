@@ -6,6 +6,16 @@
 #
 # @author: vykozlov
 
+"""
+Module with two classes: 
+
+* ProcessForTCO3Zm
+
+* ProcessForTCO3ZmReturn
+
+to produce tco3_zm and tco3_return plots correspondingly
+"""
+
 import logging
 import numpy as np
 import o3api.config as cfg

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 - 2019 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+# Copyright (c) 2019 - 2022 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
 # This code is distributed under its License. Please, see the LICENSE file
 
-# Load metadata from datasources (csv)
-# Needed:
-#  * Directory with skimmed data (cfg.O3AS_DATA_BASEPATH)
-#  * CSV file exported from the GoogleSheet "Data sources" (cfg.O3AS_DATA_SOURCES_CSV)
-#
+"""
+Module to load metadata from datasources file (csv). Needs:
+
+* Directory with skimmed data (cfg.O3AS_DATA_BASEPATH)
+
+* CSV file exported from the GoogleSheet "Data sources" (cfg.O3AS_DATA_SOURCES_CSV)
+"""
 
 import logging
 import o3api.config as cfg

@@ -18,16 +18,26 @@ O3as REST API methods:
 load
 =========
 
-module containing the LoadData class to initialize datasets and load them in-memory:
-
 .. automodule:: o3api.load
+   :members:
+
+
+loadmeta
+==========
+
+.. automodule:: o3api.loadmeta
+   :members:
+
+
+plothelpers
+============
+
+.. automodule:: o3api.plothelpers
    :members:
 
 
 prepare
 ========
-
-module with the PreparaData class to perform data selection:
 
 .. automodule:: o3api.prepare
    :members:
@@ -36,16 +46,5 @@ module with the PreparaData class to perform data selection:
 tco3_zm
 ========
 
-module with two classes: ProcessForTCO3Zm and ProcessForTCO3ZmReturn to produce tco3_zm and tco3_return plots correspondingly:
-
 .. automodule:: o3api.tco3_zm
-   :members:
-
-
-plothelpers
-============
-
-O3as help functions to create figures:
-
-.. automodule:: o3api.plothelpers
    :members:
