@@ -1,0 +1,25 @@
+# docker-compose.yaml example to run o3api
+
+version: '3.7'
+
+services:
+  o3api:
+    image: o3as/o3api
+    build:
+      context: .
+      args:
+        branch: master
+    environment:
+       O3AS_DATA_BASEPATH: /o3as-data/Skimmed
+    volumes:
+        - $HOME/datasets/o3as-data/:/o3as-data:ro
+    ports:
+        - 5005:5005
+    entrypoint:
+        - /srv/o3api/start.sh
+
+# If you start from "o3api" directory
+# E.g. with existing Docker image:
+# `$ docker-compose -f docker/docker-compose.yaml up -d
+# If you want to build your own image and immediately run:
+# `$ docker-compose -f docker/docker-compose.yaml up -d --build`

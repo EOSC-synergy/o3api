@@ -1,10 +1,15 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 - 2020 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+# Copyright (c) 2019 - 2022 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
 # This code is distributed under the MIT License
 # Please, see the LICENSE file
 #
 # @author: vykozlov
+
+"""
+Module with the PreparaData class to perform data selection
+"""
 
 import logging
 import numpy as np
@@ -107,13 +112,12 @@ class PrepareData():
         
         :param ds: xarray dataset
         :param model: The model to process for self.plot_type
-        :return dataset as pandas dataframe
+        :return: dataset as pandas dataframe
         :rtype: pandas dataframe
         """
 
         # convert to pandas series to keep date information
-        # different time axes should be harmonized in o3skim..
-        
+        # different time axes should be harmonized in o3skim.. 
         if (type(ds.indexes[TIME]) is 
             pd.core.indexes.datetimes.DatetimeIndex) :
             time_axis = ds.indexes[TIME].values

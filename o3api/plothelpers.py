@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 - 2020 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+# Copyright (c) 2019 - 2022 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
 # This code is distributed under the MIT License
 # Please, see the LICENSE file
 #
 # @author: vykozlov
+
+"""
+Module with help functions to create figures
+"""
 
 import o3api.config as cfg
 import logging
