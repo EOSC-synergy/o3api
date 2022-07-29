@@ -72,7 +72,7 @@ class PrepareData():
         return lat_a, lat_b
        
     def get_dataslice(self, model):
-        """Function to select the slice of data according 
+        """Function to select the slice of model data according 
         to the time and latitude requested
 
         :param model: The model to process
@@ -105,6 +105,10 @@ class PrepareData():
         #ds_slice = ds.sel(lat=slice(lat_a,
         #                            lat_b))  # latitude
 
+        # One may resample here per year, but seems:
+        # 1. differ from Pandas, not clear why?
+        # 2. significantly slower, e.g. x5
+        #ds_slice.resample(time="A").mean()
         return ds_slice
 
     def to_pd_dataframe(self, ds, model) -> pd.DataFrame:
@@ -141,15 +145,24 @@ class PrepareData():
         """
         # data selection according to time and latitude
         ds_slice = self.get_dataslice(model)
-        ds_plot_type = ds_slice[[TCO3]].mean(dim=[LAT])
+        ds_plot_type = ds_slice[[self.plot_type]].mean(dim=[LAT])
         logger.debug("ds_plot_type: {}".format(ds_plot_type))
 
         data = self.to_pd_dataframe(ds_plot_type, model)
         return data
 
     def get_raw_ensemble_pd(self, models) -> pd.DataFrame:
-        """Build the ensemble of tco3_zm models
-
+        """Build the ensemble of tco3_zm models and return it
+        as Pandas pd.DataFrame with time as index (sorted), e.g.:
+        
+        time                   modelA     modelB
+        1959-01-16 12:00:00    NaN        valueB1
+        1959-02-15 00:00:00    valueA1    NaN
+        ...                    ...        ...
+        2100-12-16 00:00:00    valueANN   NaN
+        2100-12-16 12:00:00    NaN        valueBNN
+        
+        
         :param models: Models to process for tco3_zm
         :return: ensemble of models as pd.DataFrame
         :rtype: pd.DataFrame

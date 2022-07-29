@@ -489,7 +489,7 @@ components:
       required: true
       schema:
         type: string
-        default: SBUV_GSFC_merged-SAT-ozone
+        default: SBUV_GSFC_observed-merged-SAT-ozone
     RefYearParam:
       name: ref_year
       in: query
