@@ -109,11 +109,10 @@ def _catch_error(f):
                                'message': '{}'.format(e),
                                'media_type': request.headers['Accept']
                              })
-            logger.debug(e_message)
+            logger.critical(e,exc_info=True)
             #raise BadRequest(e)
 
-            response = make_response(jsonify(e_message), 500)
-              
+            response = make_response(jsonify(e_message), 500)  
             logger.debug("Response: {}".format(dict(response.headers)))
             return response
 
