@@ -19,14 +19,14 @@ from o3api import load as o3load
 import connexion
 import json
 
-# conigure python logge
+# conigure python logger
 logger = logging.getLogger('__name__')
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(logging.DEBUG)
 
 # configuration for netCDF
 TIME = 'time'
-LAT  = 'lat'
+LAT = 'lat'
 TCO3 = 'tco3_zm'
 VMRO3 = 'vmro3_zm'
 TCO3Return = 'tco3_return'
@@ -51,21 +51,21 @@ class TestAPIMethods(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         specification_path = os.path.join(cfg.O3API_BASE_DIR, "o3api")
-        app = connexion.FlaskApp(__name__, 
+        app = connexion.FlaskApp(__name__,
                                  specification_dir=specification_path)
         # Read the swagger.yml file to configure the endpoints
         app.add_api('swagger.yml')
-        
+
         cls.client = app.app.test_client()
 
         # dictionary to load O3as data in memory (in o3api!)
         o3api.o3data = {
-                'tco3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
-                                           "tco3_zm").load_dataset_ensemble()
+            'tco3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
+                                       "tco3_zm").load_dataset_ensemble()
         }
 
         cls.headers = {'Content-Type': 'application/json',
-                        'Accept': 'application/json'}
+                       'Accept': 'application/json'}
 
         cls.models = ['test-o3api', 'test-o3api-2', 'test-o3api-3']
         cls.ref_meas = 'test-ref-model'
@@ -74,25 +74,25 @@ class TestAPIMethods(unittest.TestCase):
         begin_year = 1970
         end_year = begin_year + 70 # default boxcar is 10(years), range>boxcar
 
-        data_tco3_query_dict = { BEGIN: str(begin_year), 
-                                 END:   str(end_year),
-                                 LAT_MIN: '-10',
-                                 LAT_MAX: '10'
+        data_tco3_query_dict = {BEGIN: str(begin_year),
+                                END:   str(end_year),
+                                LAT_MIN: '-10',
+                                LAT_MAX: '10'
                                }
-        request_q = ''.join([key + "=" + val + "&" 
+        request_q = ''.join([key + "=" + val + "&"
                              for key,val in data_tco3_query_dict.items()])
         cls.data_tco3_request_q = request_q[:-1] + ''
 
         cls.tco3_body = list(cls.models)
-        plots_tco3_query_dict = { BEGIN: str(begin_year), 
-                                  END:   str(end_year),
-                                  LAT_MIN: '-10',
-                                  LAT_MAX: '10',
-                                  REF_MEAS: cls.ref_meas,
-                                  REF_YEAR: str(cls.ref_year),
-                                  REF_FILLNA: 'true'
+        plots_tco3_query_dict = {BEGIN: str(begin_year),
+                                 END:   str(end_year),
+                                 LAT_MIN: '-10',
+                                 LAT_MAX: '10',
+                                 REF_MEAS: cls.ref_meas,
+                                 REF_YEAR: str(cls.ref_year),
+                                 REF_FILLNA: 'true'
                                 }
-        request_q = ''.join([key + "=" + val + "&" 
+        request_q = ''.join([key + "=" + val + "&"
                              for key,val in plots_tco3_query_dict.items()])
         cls.plots_tco3_request_q = request_q[:-1] + ''
 

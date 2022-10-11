@@ -75,7 +75,7 @@ class TestPackageMethods(unittest.TestCase):
         cls.end_date = np.datetime64('2100-12-31T00:00:00Z', 'M')
         delta_years = 131
 
-        ### example of a more complicated dataset        
+        ### example of a more complicated dataset
         #self.o3ds = xr.Dataset(
         #    {"t": (("level", "lat", "time"), np.ones((10, 19, 24))),
         #     "tco3_zm": (("level", "lat", "time"), np.ones((10, 19, 24))),
@@ -83,7 +83,7 @@ class TestPackageMethods(unittest.TestCase):
         #    coords={
         #            "level": [z for z in range(0, 1000, 100)],
         #            "lat": [x for x in range(-90, 100, 10)],
-        #            "time": [ self.start_date + np.timedelta64(x, 'M') 
+        #            "time": [ self.start_date + np.timedelta64(x, 'M')
         #                      for x in range(0, 12*delta_years, 1)]
         #           }
         #)
@@ -129,7 +129,7 @@ class TestPackageMethods(unittest.TestCase):
                 linestyle = cls.o3meta[ptype]['plotstyle']['linestyle']
                 marker = cls.o3meta[ptype]['plotstyle']['marker']
                 file.write(F"test,{model},{ptype},CF-1.4,{color},{linestyle},{marker}\n")
-            
+
         ### function to emulate monthly data with noise:
         def __tco3_one(months):
             noise = np.random.normal(0, .125, months)
@@ -146,7 +146,7 @@ class TestPackageMethods(unittest.TestCase):
                 {TCO3: ((LAT, TIME), tco3) },
                 coords={
                         LAT : [x for x in range(-90, 100, 10)],
-                        TIME: [ cls.start_date + np.timedelta64(x, 'M') 
+                        TIME: [ cls.start_date + np.timedelta64(x, 'M')
                                   for x in range(0, 12*delta_years, 1)]
                        },
                 attrs={
@@ -161,7 +161,7 @@ class TestPackageMethods(unittest.TestCase):
             begin_year = cls.start_date.astype('datetime64[Y]').astype(int) + 1970
 
             test_dir = os.path.join(data_base_path, m)
-            test_path  = os.path.join(test_dir, ptype + "-test-" + 
+            test_path  = os.path.join(test_dir, ptype + "-test-" +
                                       str(end_year) + ".nc")
             os.makedirs(test_dir, exist_ok=True)
             cls.o3ds.to_netcdf(test_path)
@@ -206,13 +206,13 @@ class TestPackageMethods(unittest.TestCase):
                            str(cls.kwargs[LAT_MIN]) + deg_sign + '..' +
                            str(cls.kwargs[LAT_MAX]) + deg_sign )
 
-        cls.plot_filename = (cls.kwargs[PTYPE] + '_' + 
+        cls.plot_filename = (cls.kwargs[PTYPE] + '_' +
                              str(cls.kwargs[BEGIN]) + '_' +
                              str(cls.kwargs[END]) + '_' +
                                  'full_year' + '_' +
                              str(cls.kwargs[LAT_MIN]) + '_' +
                              str(cls.kwargs[LAT_MAX]) + '_' +
-                             str(cls.kwargs[REF_MEAS]) + '_' + 
+                             str(cls.kwargs[REF_MEAS]) + '_' +
                              str(cls.kwargs[REF_YEAR]) + '_' +
                              str(cls.kwargs[REF_FILLNA]))
 
@@ -238,7 +238,7 @@ class TestPackageMethods(unittest.TestCase):
                          o3meta['home-page'].lower().replace(' ',''))
         self.assertEqual(self.meta['author'].lower().replace(' ',''),
                          o3meta['author'].lower().replace(' ',''))
-        self.assertEqual(self.meta['author-email'].lower().replace(' ',''), 
+        self.assertEqual(self.meta['author-email'].lower().replace(' ',''),
                          o3meta['author-email'].lower().replace(' ',''))
         self.assertEqual(self.meta['license'].lower(),
                          o3meta['license'].lower())
@@ -262,7 +262,7 @@ class TestPackageMethods(unittest.TestCase):
 
     def test_get_models_info_type(self):
         """
-        Test that models_info is list, where a member is dict 
+        Test that models_info is list, where a member is dict
         """
         o3models_info = o3api.get_models_info()
         self.assertTrue(type(o3models_info) is list)
@@ -314,10 +314,10 @@ class TestPackageMethods(unittest.TestCase):
 
         model = self.kwargs[MODELS][0]
         ds = self.rdata.get_dataslice(model)
-        
+
         lat_0 = np.amin(ds.coords[LAT].values[0]) # min latitude
         lat_last = np.amax(ds.coords[LAT].values[-1]) # max latitude
-        
+
         self.assertEqual([lat_min, lat_max], [lat_0, lat_last])
 
     def test_get_data_pd_type(self):
@@ -359,7 +359,7 @@ class TestPackageMethods(unittest.TestCase):
         time_axis = pd.DatetimeIndex(self.o3ds.coords[TIME].values)
         period = phlp.get_periodicity(time_axis)
         self.assertEqual(period, 12)
-        
+
     def test_get_plot_filename(self):
         """
         Test setting of the plot filename
