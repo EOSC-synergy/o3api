@@ -2,17 +2,19 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 - 2022 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+# Copyright (c) 2019 - 2022
+# Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+#
 # This code is distributed under the MIT License
 # Please, see the LICENSE file
 #
 # @author: vykozlov
 #
-# Script to process selected data and 
+# Script to process selected data and
 # return either PDF plot or JSON document.
 # Used to build REST API.
 #
-## Ozone related information: ##
+# # Ozone related information: #
 # time: index for time (e.g. hours since start time - 6 hourly spacing)
 # lat: latitude index for geolocation
 # level: index for pressure / altitude (e.g. hPa)
@@ -20,30 +22,29 @@
 # o3: ozone data
 # tco3_zm: total column ozone, zonal mean
 # ...
-
+#
 # ToDo: improve Error handling, that Errors are correctly returned by API
 #       e.g. raise OSError("no files to open")
 
-### o3as related imports
-import o3api.config as cfg
-#import o3api.debug as dbg
-import o3api.load as o3load
-import o3api.plothelpers as phlp
-import o3api.prepare as o3prepare
-import o3api.tco3_zm as tco3zm
-from o3api.loadmeta import o3metadata
-
-### general imports
+# general imports
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.style as mplstyle
-mplstyle.use('fast') # faster?
 import numpy as np
 import os
 import pandas as pd
 import pkg_resources
 import re
 import time
+
+# o3as related imports
+import o3api.config as cfg
+# import o3api.debug as dbg
+import o3api.load as o3load
+import o3api.plothelpers as phlp
+import o3api.prepare as o3prepare
+import o3api.tco3_zm as tco3zm
+from o3api.loadmeta import o3metadata
 
 from flask import jsonify, make_response, request, send_file
 from fpdf import FPDF, HTMLMixin
@@ -52,18 +53,20 @@ from io import BytesIO
 from multiprocessing import Pool
 from PyPDF3 import PdfFileMerger
 
+# mplstyle
+mplstyle.use('fast')  # faster?
+
 # conigure python logger
 logger = logging.getLogger('__name__')
 logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s')
 logger.setLevel(cfg.log_level)
 
 
-## Authorization
-#from flaat import Flaat
-#flaat = Flaat()
-# list of trusted OIDC providers
-#flaat.set_trusted_OP_list(cfg.trusted_OP_list)
-##
+# Authorization
+# from flaat import Flaat
+# flaat = Flaat()
+# # list of trusted OIDC providers #
+# flaat.set_trusted_OP_list(cfg.trusted_OP_list)
 
 # configuration for API
 PTYPE = cfg.api_conf['plot_t']
@@ -87,37 +90,41 @@ PLOT_ST = cfg.plot_conf['plot_st']
 
 # dictionary to load O3as data in memory
 o3data = {
-        'tco3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
-                                   "tco3_zm").load_dataset_ensemble(),
-        'vmro3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
-                                    "vmro3_zm").load_dataset_ensemble()
-        }
+    'tco3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
+                               "tco3_zm").load_dataset_ensemble(),
+    'vmro3_zm': o3load.LoadData(cfg.O3AS_DATA_BASEPATH,
+                                "vmro3_zm").load_dataset_ensemble()
+    }
+
 
 def _catch_error(f):
     """Decorate function to return an error, in case
+       In all cases (e.g. JSON or PDF), return JSON response
     """
-    # In all cases (e.g. JSON or PDF), return JSON response
+
     @wraps(f)
     def wrap(*args, **kwargs):
         try:
             return f(*args, **kwargs)
         except Exception as e:
             e_message = []
-            e_message.append({ 'status': 'Error',
-                               'source': f.__name__,
-                               'object': str(type(e)),
-                               'message': '{}'.format(e),
-                               'media_type': request.headers['Accept']
-                             })
-            logger.debug(e_message)
-            #raise BadRequest(e)
+            e_message.append({
+                'status': 'Error',
+                'source': f.__name__,
+                'object': str(type(e)),
+                'message': '{}'.format(e),
+                'media_type': request.headers['Accept']
+                }
+            )
+            logger.critical(e, exc_info=True)
+            # raise BadRequest(e)
 
             response = make_response(jsonify(e_message), 500)
-              
             logger.debug("Response: {}".format(dict(response.headers)))
             return response
 
     return wrap
+
 
 def __convert_plot_style(models_style, ptype):
     """Function to convert array of dictionaries with model:name to 
@@ -139,22 +146,24 @@ def __convert_plot_style(models_style, ptype):
        
        :param models_style: input array of dictionaries
        :return: dictionary
-    """
+    """ # noqa
+
     ckwargs = {}
     for mi in models_style:
         model = mi['model']
         ckwargs[model] = {}
-        for k,v in mi[ptype][PLOT_ST].items():
+        for k, v in mi[ptype][PLOT_ST].items():
             par = k
             if k in plot_c[ptype][PLOT_ST].keys():
                 par = plot_c[ptype][PLOT_ST][k]
             ckwargs[model][par] = v
-   
+
     return ckwargs
+
 
 def __dict_remove_elems(dict_in):
     """Function to remove dictionary elements containing E-Mail addresses
-    
+
     :param dict_in: input dictionary
     :return: input dictionary where elements with E-Mail are removed
     """
@@ -163,7 +172,7 @@ def __dict_remove_elems(dict_in):
     re_email_string = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
     for key, value in dict_in.items():
         re_match = re_email_string.search(str(value))
-        if re_match != None:
+        if re_match is not None:
             logger.debug(F"{key}:{value}, E-Mail: {re_match.group(0)}")
             keys_to_delete.append(key)
 
@@ -176,11 +185,11 @@ def __dict_remove_elems(dict_in):
 
 def __legalinfo_link(model):
     # extract name of the original data-source
-    #data_source = model.split(cfg.O3AS_MODELNAME_SPLIT)[0]  
-    #return (cfg.O3AS_LEGALINFO_URL + "#" + data_source)
+    # #data_source = model.split(cfg.O3AS_MODELNAME_SPLIT)[0]
+    # #return (cfg.O3AS_LEGALINFO_URL + "#" + data_source)
     return cfg.O3AS_LEGALINFO_URL
 
- 
+
 def __return_json(df, model, pfmt):
     """Function to return JSON
 
@@ -195,9 +204,9 @@ def __return_json(df, model, pfmt):
             'legalinfo': __legalinfo_link(model),
             'x': df[model].index.map(str).tolist(),
              # np.nan replaced with None (null) to always show all "x"s
-            'y': df[model].replace({np.nan: None}).values.tolist(),  #.dropna()
+            'y': df[model].replace({np.nan: None}).values.tolist(),  # dropna()
             PLOT_ST: pfmt
-           }
+            }
 
     return data
 
@@ -212,25 +221,25 @@ def get_api_info():
     module = __name__.split('.', 1)
     pkg = pkg_resources.get_distribution(module[0])
     meta = {
-        'name' : None,
-        'version' : None,
-        'summary' : None,
-        'home-page' : None,
-        'author' : None,
-        'author-email' : None,
-        'license' : None
+        'name': None,
+        'version': None,
+        'summary': None,
+        'home-page': None,
+        'author': None,
+        'author-email': None,
+        'license': None
     }
     iline = 0
-    top_lines = 10 # take only top 10 lines (otherwise may pick from content)
+    top_lines = 10  # take only top 10 lines (otherwise may pick from content)
     for line in pkg.get_metadata_lines("PKG-INFO"):
-        line_low = line.lower() # to avoid inconsistency due to letter cases
+        line_low = line.lower()  # to avoid inconsistency due to letter cases
         if iline < top_lines:
             for par in meta:
                 if line_low.startswith(par.lower() + ":", 0):
                     _, value = line.split(": ", 1)
                     meta[par] = value
         iline += 1
-    
+
     logger.debug(F"Found metadata: {meta}")
     return meta
 
@@ -246,7 +255,7 @@ def get_data_types():
     for t in possible_types:
         kwargs[PTYPE] = t
         models = get_models_list(**kwargs)
-        isdata = True if len(models) > 0 else False    
+        isdata = True if len(models) > 0 else False
         ptypes.append(t) if isdata else ''
 
     return ptypes
@@ -262,7 +271,7 @@ def get_data_tco3_zm(*args, **kwargs):
     kwargs[PTYPE] = TCO3
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
     models = kwargs[MODELS]
-  
+
     data = o3prepare.PrepareData(o3data['tco3_zm'], **kwargs)
     tco3_data = data.get_raw_ensemble_pd(models)
 
@@ -272,8 +281,8 @@ def get_data_tco3_zm(*args, **kwargs):
     json_output = []
     __json_append = json_output.append
 
-    [ __json_append(__return_json(tco3_data, m, ckwargs[m])) for m in models ]
-        
+    [__json_append(__return_json(tco3_data, m, ckwargs[m])) for m in models]
+
     response = json_output
 
     return response
@@ -286,10 +295,11 @@ def get_data_tco3_return(*args, **kwargs):
     :param kwargs: provided in the API call parameters
     :return: JSON document with data points
     """
-    kwargs[PTYPE] = TCO3 #Return
+
+    kwargs[PTYPE] = TCO3  # Return
     kwargs[MODELS] = phlp.cleanse_models(**kwargs)
     models = kwargs[MODELS]
-  
+
     # TCO3Return => TCO3
     data = o3prepare.PrepareData(o3data['tco3_zm'], **kwargs)
     tco3_data = data.get_raw_ensemble_pd(models)
@@ -301,8 +311,8 @@ def get_data_tco3_return(*args, **kwargs):
     json_output = []
     __json_append = json_output.append
 
-    [ __json_append(__return_json(tco3_data, m, ckwargs[m])) for m in models ]
-        
+    [__json_append(__return_json(tco3_data, m, ckwargs[m])) for m in models]
+
     response = json_output
 
     return response
@@ -316,10 +326,11 @@ def get_data_vmro3_zm(*args, **kwargs):
     """
     pass
 
+
 @_catch_error
 def get_models_info():
     """Return dictionary of available models with the meta info
-    
+
     :return: The dictionary of available models
     :rtype: dict
     """
@@ -336,9 +347,10 @@ def get_models_info():
     m_counter = 0
     list_dir_all = os.listdir(cfg.O3AS_DATA_BASEPATH)
     # take only directory names, avoid file names
-    list_dir = filter(lambda mdir: os.path.isdir(os.path.join(cfg.O3AS_DATA_BASEPATH,
-                                                              mdir)), 
-                      list_dir_all)
+    list_dir = filter(lambda mdir: os.path.isdir(
+        os.path.join(cfg.O3AS_DATA_BASEPATH, mdir)
+        ),
+        list_dir_all)
     list_dir = list(list_dir)
     list_dir.sort()
 
@@ -346,32 +358,32 @@ def get_models_info():
         m_path = os.path.join(cfg.O3AS_DATA_BASEPATH, model)
         m_files = os.listdir(m_path)
         if (os.path.isdir(m_path)) and any(".nc" in f for f in m_files):
-            meta = { 'model' : model,
-                     'legalinfo': __legalinfo_link(model),
-                     TCO3: {
-                          "isdata": False,
-                          PLOT_ST: {
-                              'color': '',
-                              'marker': '',
-                              'linestyle': ''
-                              }
-                          },
-                     TCO3Return: {
-                          "isdata": False,
-                          PLOT_ST: {
-                              'color': '',
-                              'marker': '',
-                              'linestyle': ''
-                              }
-                          },
-                     VMRO3: {
-                          "isdata": False,
-                          PLOT_ST: {
-                              'color': '',
-                              'marker':'',
-                              'linestyle': ''
-                              }
-                          },
+            meta = {'model': model,
+                    'legalinfo': __legalinfo_link(model),
+                    TCO3: {
+                         "isdata": False,
+                         PLOT_ST: {
+                             'color': '',
+                             'marker': '',
+                             'linestyle': ''
+                             }
+                         },
+                    TCO3Return: {
+                         "isdata": False,
+                         PLOT_ST: {
+                             'color': '',
+                             'marker': '',
+                             'linestyle': ''
+                             }
+                         },
+                    VMRO3: {
+                         "isdata": False,
+                         PLOT_ST: {
+                             'color': '',
+                             'marker':'',
+                             'linestyle': ''
+                             }
+                         },
                    }
 
             # inizialize with some colors
@@ -414,6 +426,7 @@ def get_models_info():
 
     return models
 
+
 @_catch_error
 def get_models_list(*args, **kwargs):
     """Return the list of available Ozone models
@@ -438,6 +451,7 @@ def get_models_list(*args, **kwargs):
 
     models_list.sort()
     return models_list
+
 
 @_catch_error
 def get_plot_style(*args, **kwargs):
@@ -471,6 +485,7 @@ def get_plot_style(*args, **kwargs):
 
     return plots_format
 
+
 @_catch_error
 def get_model_detail(*args, **kwargs):
     """Return information about the Ozone model
@@ -499,13 +514,14 @@ def get_model_detail(*args, **kwargs):
     logger.debug(F"{model} model info: {model_info_dict}")
     return model_info_dict
 
+
 def get_plot_types():
     """Get list of the provided plot methods"""
     plots = [ TCO3, TCO3Return] #, VMRO3 ]
 
     return plots
 
-#@dbg._profile
+
 @_catch_error
 def plot_tco3_zm(*args, **kwargs):
     """Plot tco3_zm
@@ -580,6 +596,7 @@ def plot_tco3_zm(*args, **kwargs):
 
     return response
 
+
 def __fill_default_region(region, **kwargs):
     kwargs['region'] = region
     region_params = cfg.tco3_return_regions[region]
@@ -589,6 +606,7 @@ def __fill_default_region(region, **kwargs):
     logger.debug(F"{region} processed")
 
     return data_return
+
 
 @_catch_error
 def plot_tco3_return(*args, **kwargs):
@@ -701,6 +719,7 @@ def plot_tco3_return(*args, **kwargs):
                                                                time_start))
 
     return response
+
 
 @_catch_error
 def plot_vmro3_zm(*args, **kwargs):

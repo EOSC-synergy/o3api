@@ -70,5 +70,25 @@ pipeline {
                 }
             }
         }
+        
+        // Trigger another job (o3k8s) for Service Deployment Testing
+        stage("SvcQA") {
+            when {
+                anyOf {
+                   changeset 'docker/*'
+                   changeset 'o3api/*'
+                   changeset '*requirements.txt'
+                   changeset 'Jenkinsfile'
+                   triggeredBy 'TimerTrigger'
+                   triggeredBy cause: 'UserIdCause'
+                }
+            }
+            steps {
+                script {
+                    def svcqa_result = build job: 'eosc-synergy-org/o3k8s/main', parameters: [], propagate: true, wait: true
+                    svcqa_result_url = svcqa_result.absoluteUrl
+                }
+            }
+        }
     }
 }

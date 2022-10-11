@@ -41,6 +41,8 @@ O3AS_ACKNOWLEDGMENT_URL=os.getenv('O3AS_ACKNOWLEDGMENT_URL',
 
 O3AS_MODELNAME_SPLIT='_'
 
+O3AS_OBSERVED_PATTERN = os.getenv('O3AS_OBSERVED_PATTERN', 'observed')
+
 # minimum number of years after the Reference Year:
 O3AS_TCO3Return_REF_YEAR_MARGIN = 5
 # boxcar smoothing parameter:

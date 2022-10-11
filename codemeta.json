@@ -1,0 +1,41 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "license": "https://spdx.org/licenses/GPL-3.0+",
+    "codeRepository": "git+https://git.scc.kit.edu/synergy.o3as/o3api.git",
+    "dateCreated": "2022-10-10",
+    "datePublished": "2022-10-10",
+    "dateModified": "2022-10-10",
+    "downloadUrl": "https://git.scc.kit.edu/synergy.o3as/o3api/-/archive/master/o3api-master.tar.gz",
+    "issueTracker": "https://github.com/EOSC-Synergy/o3api/issues",
+    "name": "o3api",
+    "description": "REST API for O3as thematic service to create images of ozone time series and ozone return rates",
+    "applicationCategory": "Atmosphere",
+    "isPartOf": "https://git.scc.kit.edu/synergy.o3as/",
+    "keywords": [
+        "stratosphere",
+        "ozone",
+        "assessment",
+        "trend",
+        "ozone recovery"
+    ],
+    "programmingLanguage": [
+        "python3"
+    ],
+    "softwareRequirements": [
+        "https://git.scc.kit.edu/synergy.o3as/o3api/blob/master/requirements.txt"
+    ],
+    "author": [
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/0000-0002-8770-3619",
+            "givenName": "Valentin",
+            "familyName": "Kozlov",
+            "email": "valentin.kozlov@kit.edu",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Karlsruhe Institute of Technology, SCC"
+            }
+        }
+    ]
+}

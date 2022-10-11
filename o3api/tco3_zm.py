@@ -84,6 +84,15 @@ class ProcessForTCO3Zm(PrepareData):
             (0). optionally interpolate missing values in the reference measurement
             1. group by year
             2. average by applying mean()
+            
+        Return pd.DataFrame, e.g.:
+
+        time    modelA     modelB
+        1959    NaN        valueB1
+        1960    valueA1    valueB2
+        ...     ...        ...
+        2099    valueANN   valueBNM
+        2100    NaN        valueBNN            
         
         :param models: Models to process for tco3 plots
         :return: yearly averaged data points
@@ -100,7 +109,7 @@ class ProcessForTCO3Zm(PrepareData):
 
         # select data according to the years requested
         #return data[(data.index>=self.begin) & (data.index<=self.end)]
-        
+
         return data
 
     def get_ref_value(self):
@@ -144,8 +153,16 @@ class ProcessForTCO3Zm(PrepareData):
         :rtype: pd.DataFrame
         """
 
+        # 1.  get values for every model at the reference year
+        # 2.  calculate the shift
+        # 2b. set shift to zero for the observed data
+        # 3.  apply the shift
         data_ref_year = data[data.index == self.ref_year].mean()
         shift = self.ref_value - data_ref_year
+        # For the observed data, we do NOT apply any shift
+        # discussed internally in July-2022
+        shift.loc[shift.index.str.contains(cfg.O3AS_OBSERVED_PATTERN,
+                                           case=False)] = 0.
         # in the case of no data at ref_year, "shift" contains NaNs
         # Option 1:
         # => replace NaNs with "0.", i.e. do NOT apply shift!

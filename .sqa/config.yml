@@ -70,4 +70,4 @@ sqa_criteria:
           testenv:
             - bandit
 
-timeout: 900
+timeout: 1200

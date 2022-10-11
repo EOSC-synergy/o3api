@@ -41,7 +41,7 @@ def home():
     """This function just responds to the browser URL localhost:5000/
     :return:        the rendered template 'home.html'
     """
-    logger.debug("O3API_LISTEN_IP:O3API_PORT = {}:{}".format(o3api_listen_ip, 
+    logger.debug("O3API_LISTEN_IP:O3API_PORT = {}:{}".format(o3api_listen_ip,
                                                      o3api_port))
 
     return render_template('index.html')
@@ -53,7 +53,7 @@ def api_home():
     """This function just responds to the browser URL localhost:5000/api
     :return:        the rendered template 'index.html'
     """
-    logger.debug("O3API_LISTEN_IP:O3API_PORT = {}:{}".format(o3api_listen_ip, 
+    logger.debug("O3API_LISTEN_IP:O3API_PORT = {}:{}".format(o3api_listen_ip,
                                                      o3api_port))
 
     return render_template('index.html')
