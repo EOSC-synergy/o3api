@@ -2,6 +2,7 @@
 [![Build Status](https://jenkins.eosc-synergy.eu/buildStatus/icon?job=eosc-synergy-org%2Fo3api%2Fmaster)](https://jenkins.eosc-synergy.eu/job/eosc-synergy-org/job/o3api/job/master/)
 [![Documentation Status](https://readthedocs.org/projects/o3as/badge/?version=latest)](https://o3as.readthedocs.io/en/latest/?badge=latest)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7357936.svg)](https://doi.org/10.5281/zenodo.7357936)
 
 [<img src="https://o3as.data.kit.edu/img/logos/o3as-logo.png" width=50 alt="O3as logo"/>](http://o3as.data.kit.edu/) &nbsp;&nbsp;
 O3as is a service for Ozone (O3) Assessment, http://o3as.data.kit.edu/
@@ -104,6 +105,9 @@ Please, see our [CONTRIBUTING](CONTRIBUTING.md) description and the [CODE OF CON
 This code is distributed under the GNU GPLv3 License. Please, see the [LICENSE](LICENSE) file
 
 ## Authors and acknowledgment
+For citing, please, use: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7357936.svg)](https://doi.org/10.5281/zenodo.7357936)
+and also check the [CITATION.cff](CITATION.cff)
+
 @Authors: Valentin Kozlov, Borja Esteban, Tobias Kerzenmacher (KIT)
 
 Copyright (c) 2020 - 2022 Karlsruhe Institute of Technology - Steinbuch Centre for Computing.
