@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Kozlov
+    given-names: Valentin
+    orcid: https://orcid.org/0000-0002-8770-3619
+  - family-names: Esteban Sanchis
+    given-names: Borja
+    orcid: https://orcid.org/0000-0002-4929-8288
+  - family-names: Kerzenmacher
+    given-names: Tobias
+    orcid: https://orcid.org/0000-0001-8413-0539
+title: o3api - REST API for the Ozone assessment service (O3as)
+doi: 10.5281/zenodo.7357936
+contact:
+  - affiliation: "Karlsruhe Institute of Technology (KIT)"
+    email: o3as-support@lists.kit.edu
