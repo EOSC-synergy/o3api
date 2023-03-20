@@ -12,7 +12,7 @@ info:
   license:
     name: Licensed under GPLv3
     url: https://git.scc.kit.edu/synergy.o3as/o3api/-/raw/master/LICENSE
-  version: 0.8.5
+  version: 0.8.6
 servers:
 - url: /api/v1
 paths:
@@ -345,6 +345,8 @@ components:
           type: string
         home-page:
           type: string
+        legalinfo:
+          type: string
         license:
           type: string
         name:
@@ -364,6 +366,8 @@ components:
     ModelInfo:
       type: object
       properties:
+        legalinfo:
+          type: string
         model:
           type: string
         tco3_zm:
@@ -375,31 +379,62 @@ components:
     ModelInfoObj:
       type: object
       properties:
-        data:
+        original_metadata:
           type: object
-          properties: {}
+          properties:
+            attrs:
+              type: object
+              properties: {}
+            coords:
+              type: object
+              properties: {}
+            data_vars:
+              type: object
+              properties: {}
+            dims:
+              type: object
+              properties: {}
         isdata:
           type: boolean
         plotstyle:
-          type: object
-          properties: {}
+          $ref: '#/components/schemas/ModelsPlotStyleObj'
     ModelsPlotStyle:
       type: object
       properties:
         model:
           type: string
         tco3_zm:
-          $ref: '#/components/schemas/ModelsPlotStyleObj'
+          type: object
+          properties:
+            plotstyle:
+              $ref: '#/components/schemas/ModelsPlotStyleObj'
         tco3_return:
-          $ref: '#/components/schemas/ModelsPlotStyleObj'
+          type: object
+          properties:
+            plotstyle:
+              $ref: '#/components/schemas/ModelsPlotStyleObj'
         vmro3_zm:
-          $ref: '#/components/schemas/ModelsPlotStyleObj'
+          type: object
+          properties:
+            plotstyle:
+              $ref: '#/components/schemas/ModelsPlotStyleObj'
     ModelsPlotStyleObj:
       type: object
       properties:
-        plotstyle:
-          type: object
-          properties: {}
+        color:
+          type: string
+        label:
+          type: string
+        linestyle:
+          type: string
+        linewidth:
+          type: number
+        marker:
+          type: string
+        markersize:
+          type: number
+        mfc:
+          type: string     
     PlotsList:
       type: array
       items:
@@ -412,8 +447,7 @@ components:
         model:
           type: string
         plotstyle:
-          type: object
-          properties: {}
+          $ref: '#/components/schemas/ModelsPlotStyleObj'
         x:
           type: array
           items:

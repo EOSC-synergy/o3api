@@ -227,7 +227,8 @@ def get_api_info():
         'home-page': None,
         'author': None,
         'author-email': None,
-        'license': None
+        'license': None,
+        'legalinfo': cfg.O3AS_LEGALINFO_URL
     }
     iline = 0
     top_lines = 10  # take only top 10 lines (otherwise may pick from content)
