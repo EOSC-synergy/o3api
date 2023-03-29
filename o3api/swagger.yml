@@ -12,7 +12,7 @@ info:
   license:
     name: Licensed under GPLv3
     url: https://git.scc.kit.edu/synergy.o3as/o3api/-/raw/master/LICENSE
-  version: 0.8.6
+  version: 0.8.7
 servers:
 - url: /api/v1
 paths:
@@ -268,25 +268,25 @@ paths:
         200:
           description: Successfully created the plot
           content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/O3Data'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
         404:
           description: Requested resource not found
           content: {}
         default:
           description: Unexpected error
           content:
-            application/pdf:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-            application/json:
+            application/pdf:
               schema:
                 $ref: '#/components/schemas/Error'
       x-codegen-request-body-name: models
@@ -312,25 +312,25 @@ paths:
         200:
           description: Successfully created a plot
           content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/O3Data'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
         404:
           description: Requested resource not found
           content: {}
         default:
           description: Unexpected error
           content:
-            application/pdf:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-            application/json:
+            application/pdf:
               schema:
                 $ref: '#/components/schemas/Error'
       x-codegen-request-body-name: models
