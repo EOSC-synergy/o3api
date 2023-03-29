@@ -12,7 +12,7 @@ info:
   license:
     name: Licensed under GPLv3
     url: https://git.scc.kit.edu/synergy.o3as/o3api/-/raw/master/LICENSE
-  version: 0.8.6
+  version: 0.8.7
 servers:
 - url: /api/v1
 paths:
